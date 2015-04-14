@@ -1,0 +1,662 @@
+<html>
+<head>
+<meta http-equiv = "content-type" content = "application/xhtml+xml; charset = UTF-8" />
+<meta content = 'width = device-width, initial-scale = 1.0, maximum-scale = 1.0, user-scalable = 0' name = 'viewport' /><meta name = "viewport" content = "width = device-width, maximum-scale = 1.0, initial-scale = 1.0">
+<meta name = "apple-mobile-web-app-capable" content = "yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Chromaris</title>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+<style type="text/css">
+body{
+background-color:#f00;
+}
+*{
+font-family: 'Arial';
+-webkit-user-select:none;
+-webkit-backface-visibility:hidden;
+}
+</style>
+<script>
+var ddiv;
+var animCanv;
+var animCtx;
+var bgCanv;
+var bcCtx;
+function init(){
+  ddiv=document.getElementById('debugDiv');
+  bgCanv=document.getElementById('bgCanvas');
+  bgCtx=bgCanv.getContext("2d");
+  bgCtx.textAlign="center";
+  bgCtx.textBaseline="middle";
+  animCanv=document.getElementById('animCanvas');
+  animCtx=animCanv.getContext("2d");
+
+  animCanv.ontouchstart=function(e){touchStart(e);}
+  animCanv.ontouchmove=function(e){touchMove(e);}
+  animCanv.ontouchend=function(e){touchEnd(e);}
+    
+  geometry();
+  setupTrigger();
+  initVoices();
+  layoutVoices();
+  
+  //drawGrid(bgCtx);
+  drawBg();
+  geometryInterval=window.setInterval("geometryTick()", 100);
+  drawAnim(true);
+  animInterval=window.setInterval("drawAnim(false)", 25);
+  }
+
+var touchStartX=0;
+var touchStartY=0;
+var touchingV=-1;
+var touchingP=-1;
+var audioTriggered=false;
+
+
+function touchStart(e){
+  e.preventDefault();
+  if(audioTriggered==false){
+    triggerSource.noteOn(0);
+    audioTriggered=true;
+    return false;
+    }
+
+  touchStartX=e.touches[0].clientX-leftPad;
+  touchStartY=e.touches[0].clientY-topPad;
+  //dbug('touchStart() '+ touchStartX + " "+ touchStartY);
+  var nearest=returnNearestPanel(touchStartX,touchStartY);
+  touchingV=nearest.v
+  touchingP=nearest.p
+  if(touchingP>0){
+    voices[touchingV][0].val=-1;
+    if(voices[touchingV].running){
+      audioSources[touchingV].noteOff(0);
+      voices[touchingV].running=false;
+      }
+    drawAnim(true);
+    }
+  touchMove(e);
+  }
+function returnNearestPanel(x,y){
+  var nearest={"label":"no nearest wtf?"};
+  var nearestDist=99999;
+  for (var v=0; v<voices.length; v++){
+    for(p=0; p<voices[v].length; p++){
+      var dx=voices[v][p].x*g-x;
+      var dy=voices[v][p].y*g-y;
+      var dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<nearestDist){
+        nearestDist=dist;
+        nearest=voices[v][p];
+        }
+      }
+    }
+  return nearest;
+  }
+function touchMove(e){
+  e.preventDefault();
+  if((touchingV != -1)&&(touchingV != -1)){
+    var panel=voices[touchingV][touchingP];
+    var x=e.touches[0].clientX-leftPad;
+    var y=e.touches[0].clientY-topPad;
+    var tx=panel.x*g;
+    var ty=panel.y*g;
+    var dx=x-tx;
+    var dy=y-ty;
+  //dbug(dx+" "+dy);
+  //dbuga(panel.orient);
+    var range=g*len;//2*len would be 3.5
+    var val=0;
+    if(panel.orient=="horizontal"){
+      val=dx/range;
+      }
+    else{// vertical
+      val=dy/range;
+      }
+    if(val<-1){val=-1;}
+    if(val>1){val=1;}
+    panel.val=val;
+  //dbuga(Math.floor(val*100)/100);
+    }
+  }
+function touchEnd(e){
+  e.preventDefault();
+  if((touchingV != -1)&&(touchingP != -1)){
+    var panel=voices[touchingV][touchingP];
+    var stops=panel.tics.length;
+    if(stops==2){
+      if(panel.val<0){
+        panel.val=-1;
+        panel.selected=0;
+        }
+      else{
+        panel.val=1;
+        panel.selected=1;
+        }
+      }
+    if(stops==3){
+      //dbuga(panel.val+" to "+Math.floor(panel.val+.5));
+      panel.val=Math.floor(panel.val+.5);
+      panel.selected=panel.val+1;
+      }
+    //setupAudio(touchingV, touchingP, panel.tics[panel.selected]);
+
+    //dbuga("in touchEnd bufferV="+bufferV);
+    //audioSources[bufferV].start(0);
+
+    if(touchingP==0){
+      if(voices[touchingV][0].val==1){//on
+        audioSources[touchingV].noteOn(0);
+        voices[touchingV].running=true;
+        //dbuga("noteOn for "+ touchingV);
+        }
+      else{
+        if(voices[touchingV].running){
+          audioSources[touchingV].noteOff(0);
+          voices[touchingV].running=false;
+          //dbuga("noteOff for "+ touchingV);
+          }
+        setupAudio(touchingV);
+        }
+      }
+    else{
+      setupAudio(touchingV);
+      }
+    }
+  drawAnim(false);
+  touchingP=-1;
+  touchingV=-1;
+  }
+var animInterval
+var vw=100;
+var vh=100;
+var cellsAcross=36;
+var cellsDown=60;
+var g=1;
+var pi=Math.PI;
+var geometryInterval;
+var cx=6;
+var cy=6;
+var d = new Date();
+var startMs=d.getTime();
+function oval(x,y,r0,r1,radians,counter){
+  var ctx=animCtx;
+  var x0=x+r0*Math.cos(radians);
+  var y0=y+r0*Math.sin(radians);
+  var x1=x+r1*Math.cos(radians+pi/2);
+  var y1=y+r1*Math.sin(radians+pi/2);
+  var x2=x+r0*Math.cos(radians+pi);
+  var y2=y+r0*Math.sin(radians+pi);
+  var x3=x+r1*Math.cos(radians-pi/2);
+  var y3=y+r1*Math.sin(radians-pi/2);
+  var cpx1=x2+r1*Math.cos(radians+pi/2);
+  var cpy1=y2+r1*Math.sin(radians+pi/2);
+  var cpx0=x0+r1*Math.cos(radians+pi/2);
+  var cpy0=y0+r1*Math.sin(radians+pi/2);
+  var cpx2=x2+r1*Math.cos(radians-pi/2);
+  var cpy2=y2+r1*Math.sin(radians-pi/2);
+  var cpx3=x0+r1*Math.cos(radians-pi/2);
+  var cpy3=y0+r1*Math.sin(radians-pi/2);
+  //plot(x0,y0,"black");
+  ctx.beginPath();
+  if(counter){
+    //plot(cpx3,cpy3,"rgba(255,255,0,1)");
+    //plot(cpx2,cpy2,"rgba(0,0,255,1)");
+    ctx.moveTo(x0,y0);
+    ctx.quadraticCurveTo(cpx3,cpy3,x3,y3);
+    ctx.quadraticCurveTo(cpx2,cpy2,x2,y2);
+    }
+  else{
+    //plot(cpx1,cpy1,"rgba(255,0,0,1)");
+    //plot(cpx0,cpy0,"rgba(0,255,0,1)");
+    ctx.moveTo(x0,y0);
+    ctx.quadraticCurveTo(cpx0,cpy0,x1,y1);
+    ctx.quadraticCurveTo(cpx1,cpy1,x2,y2);
+    }
+  ctx.stroke();
+  //moveTo beginning
+  //bez to perp
+  //bez to end 
+  }
+var voicePanel=[
+  {"baseX":4, "baseY":3,"label":"VOICE ~", "orient":"horizontal", "tics":["OFF","ON"], "val":"-1", "selected":0},
+  {"baseX":10, "baseY":3, "label":"RANGE", "orient":"vertical", "tics":["HIGH","MID","LOW"], "val":"-1", "selected":0},
+  {"baseX":4, "baseY":8, "label":"TRIG", "orient":"horizontal", "tics":["RND","ON","SYNC"], "val":"-1", "selected":0},
+  {"baseX":10, "baseY":8, "label":"OSC", "orient":"vertical", "tics":["NOISE","TONE","RING"], "val":"-1", "selected":0}
+];
+
+
+
+
+
+
+
+
+
+var voices=[];
+var audioContexts=[];
+var audioSources=[];
+var bufferV=0;
+var audioTriggered=false;
+var triggerContext;
+var triggerSource;
+var testContext;
+var testSource;
+
+function setupTrigger(){
+  triggerContext=new webkitAudioContext();
+  request = new XMLHttpRequest();
+  request.open('GET', "mp3/trigger.mp3", true);
+  request.responseType = 'arraybuffer';
+  request.addEventListener('load', bufferTrigger, false);
+  request.send();
+
+  testContext=new webkitAudioContext();
+  request = new XMLHttpRequest();
+  request.open('GET', "mp3/test.mp3", true);
+  request.responseType = 'arraybuffer';
+  request.addEventListener('load', bufferTest, false);
+  request.send();
+  }
+function bufferTrigger(event) {
+    var request = event.target;
+    var source = triggerContext.createBufferSource();
+    source.buffer = triggerContext.createBuffer(request.response, false);
+    triggerSource = source;
+    source.connect(triggerContext.destination);
+  }
+function bufferTest(event) {
+    var request = event.target;
+    var source = testContext.createBufferSource();
+    source.buffer = testContext.createBuffer(request.response, false);
+    testSource = source;
+    source.connect(testContext.destination);
+  }
+function setupAudio(v){
+  bufferV=v;
+
+  var range=voices[v][1].tics[voices[v][1].selected];
+  var sync=voices[v][2].tics[voices[v][2].selected];
+  var osc=voices[v][3].tics[voices[v][3].selected];
+  var url="mp3/"+range+"_"+sync+"_"+osc+".mp3";
+  url=url.toLowerCase();
+  voices[v].running = false;
+  //dbuga('setupAudio('+url+')');
+  body.style.backgroundColor="red";
+  
+request = new XMLHttpRequest();
+request.open('GET', url, true);
+request.responseType = 'arraybuffer';
+request.addEventListener('load', bufferSound, false);
+request.send();
+
+}
+function bufferSound(event) {
+    document.getElementById('body').style.backgroundColor="green";
+    //alert(JSON.stringify(event));
+    //alert(str);
+    var request = event.target;
+    var source = audioContexts[bufferV].createBufferSource();
+    source.buffer = audioContexts[bufferV].createBuffer(request.response, false);
+    audioSources[bufferV] = source;
+    audioSources[bufferV].loop=true;
+
+    source.connect(audioContexts[bufferV].destination);
+    //dbuga("bufferSound bufferV="+bufferV);
+    buffCount++;
+    if(buffCount<voices.length){
+      setupAudio(buffCount);
+      }
+    //if(buffCount==voices.length){dbug('ready!');}
+
+    //window.setTimeout("startBuffer()", 4000);
+    //startBuffer();
+  }
+function startBuffer(){
+  //dbuga('startBuffer() '+bufferV);
+  audioSources[bufferV].start();
+  }
+
+function initVoices(){
+  audioContexts=[];
+  audioSources=[];
+
+  voices=[];
+  for (var v=0; v<totalVoices; v++){
+    var newAudioContext=new webkitAudioContext();
+    var newSource="";
+    audioContexts.push(newAudioContext);
+    audioSources.push(newSource);
+    var thisPanel=[];
+    thisPanel.url="";
+    thisPanel.running=false;
+    for(p=0; p<voicePanel.length; p++){
+      var vp= JSON.parse(JSON.stringify(voicePanel[p]));
+      vp.label=vp.label.replace("~", 1+voices.length);
+      vp.x=vp.baseX;
+      vp.y=vp.baseY;
+      vp.v=v;
+      vp.p=p;
+      thisPanel.push(vp);
+      }
+    voices.push(thisPanel);
+    }
+  //dbuga('initVoices() '+voices.length);
+  buffCount=0;
+  setupAudio(0);
+  }
+var buffCount;
+function layoutVoices(){
+  var v=0;
+  for(var y=0; y<cellsDown; y+=11){
+    for(var x=0; x<cellsAcross; x+=13){
+      for(var p=0; p<voices[v].length; p++){
+        voices[v][p].x=voices[v][p].baseX+x;
+        voices[v][p].y=voices[v][p].baseY+y;
+        //voices[v][p].left=
+        }
+      v++;
+      }
+    }
+  //dbuga('layoutVoices() v='+v);
+  }
+function drawBg(){
+  //dbuga('drawBg()');
+  for (var v=0; v<voices.length; v++){
+    var thisVoice=voices[v];
+    bgCtx.fillStyle="rgba(200,200,200,.15)";
+    bgCtx.strokeStyle="#888";
+    bgCtx.lineWidth=g/6;
+    roundRect(bgCtx, g*(thisVoice[0].x-3.5), g*(thisVoice[0].y-2.5), g*12, g*10, g, true, true);
+    for (var p=0; p<thisVoice.length; p++){
+      var val=0;
+      var vp=thisVoice[p];
+      toggleBg(vp.x,vp.y,vp.orient,val, vp.tics, vp.label);
+      }
+    }
+  }
+function drawAnim(force){
+  for (var v=0; v<voices.length; v++){
+    var thisVoice=voices[v];
+    for (var p=0; p<thisVoice.length; p++){
+      var vp=thisVoice[p];
+      if((force)||((v==touchingV)&&(p==touchingP))){
+        toggleSwitch(vp.x,vp.y,vp.orient,vp.val, vp.tics, vp.label);
+        }
+      }
+    }
+  }
+function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+  if (typeof stroke == "undefined" ) {
+    stroke = true;
+  }
+  if (typeof radius === "undefined") {
+    radius = 5;
+  }
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  if (stroke) {
+    ctx.stroke();
+  }
+  if (fill) {
+    ctx.fill();
+  }        
+}
+
+function rnd(range){
+  return Math.floor(Math.random()*range);
+  }
+function plot(x,y,color){
+  ctx.beginPath();
+  ctx.lineWidth=2;
+  ctx.fillStyle=color;
+  ctx.strokeStyle="rgba(0,0,0,.5)";
+  ctx.arc(x,y,g/4,0,pi*2,true);
+  ctx.fill();
+  ctx.fill();
+  ctx.stroke();
+  }
+function toggleBg(x0,y0,orient,pos, tics, label){//returns path
+  var ctx=bgCtx;
+  ctx.strokeStyle="#444";
+  if(orient=="vertical"){x0--;}
+
+
+  ctx.fillStyle="#444";
+  
+  if(orient=="horizontal"){
+    var min=(x0-len)*g;
+    var max=(x0+len)*g;
+    
+    var range=max-min;
+    var step=range/(tics.length-1);
+    ctx.font=g/1.5+"px Arial";
+    ctx.strokeStyle="#444";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+ 
+    ctx.font=g/1.5+"px Arial";
+    for (var t=0; t<tics.length; t++){
+      ctx.fillText(tics[t], min+t*step, y0*g+g*1.25);
+      }
+    if(label.indexOf("VOICE")>-1){
+      ctx.lineWidth=1;
+      ctx.font=g/1.25+"px Arial";
+      ctx.strokeText(label, x0*g,y0*g-g*1.5);
+      }
+    
+    ctx.fillText(label, x0*g,y0*g-g*1.5);
+    }
+  else{
+    var min=(y0-slot)*g;
+    var max=(y0+slot)*g;
+
+    var range=max-min;
+    var step=range/(tics.length-1);
+    ctx.font=g/1.5+"px Arial";
+    ctx.strokeStyle="#444";
+    ctx.textAlign="left";
+    ctx.textBaseline="middle";
+ 
+    ctx.fillText(label, x0*g-g*.5 ,y0*g+g*2);
+    for (var t=0; t<tics.length; t++){
+      ctx.fillText(tics[t], x0*g+g*1, min+t*step);
+      }
+    }
+
+
+  ctx.beginPath();
+  var x1;
+  var y1;
+  if(orient=="horizontal"){
+    x1=x0+len*pos;
+    y1=y0;
+    ctx.arc((x0-slot)*g,(y0)*g, 2+g/2,pi*.5,pi*1.5,false);
+    ctx.arc((x0+slot)*g,(y0)*g, 2+g/2,pi*1.5,pi*.5,false);
+    }
+  else{
+    x1=x0;
+    y1=y0+len*pos;
+    ctx.arc((x0)*g,(y0-slot)*g, 2+g/2,pi*1,pi*0,false);
+    ctx.arc((x0)*g,(y0+slot)*g, 2+g/2,pi*0,pi*1,false);
+    }
+  
+  ctx.closePath();
+  ctx.fill();
+  }
+
+function toggleSwitch(x0,y0,orient,pos, tics, label){
+  var ctx=animCtx;
+  ctx.clearRect(g*(x0-2.5), g*(y0-2.5),g*5,g*5);
+  if(orient=="vertical"){x0--;}
+  var x1;
+  var y1;
+  if(orient=="horizontal"){
+    x1=x0+len*pos;
+    y1=y0;
+    }
+  else{
+    x1=x0;
+    y1=y0+len*pos;
+    }
+  var x2=x0;
+  var y2=y0;  
+  if(orient=="horizontal"){
+    x2+=len*pos/2;
+    }
+  else{
+    y2+=len*pos/2;
+    }
+
+
+  ctx.lineWidth=2;
+  ctx.strokeStyle="#666";
+
+  var p=.01;
+  // px py is slight perspective offset
+  var px=(cx-x1)*p;
+  var py=(cy-y1)*p;
+  var dx=(x0-x1+px);
+  var dy=(y0-y1+py);
+  var dist=Math.sqrt(dx*dx+dy*dy);
+  var squeeze=1-dist/(len*2);
+  var vec=Math.atan2(-dy, -dx);
+  var deg=(360+Math.floor(180*vec/pi))%360;
+  var mx1=x0-dx;
+  var my1=y0-dy;
+  ctx.beginPath();
+  //ctx.arc(mx1*g,my1*g,g/2,vec-pi*1.5,vec-pi*.5,true);
+  oval(mx1*g,my1*g,g/2,squeeze*g/2,vec+pi/2,true)
+  ctx.arc(x2*g,y2*g,g/2,vec+pi*1.5,vec+pi*.5,true);
+  ctx.closePath();
+  ctx.fillStyle="#eee";
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  oval(mx1*g,my1*g,g/2,squeeze*g/2,vec+pi/2,false);
+  ctx.stroke();
+  
+  }
+var len=1.75;
+var slot=1;
+var minCellSize=15;
+var leftPad=100;
+var topPad=10;
+var cw=100;
+var ch=100;
+var totalVoices=1;
+function geometryTick(){
+  if((window.innerWidth != vw)||(window.innerHeight != vh)){
+    //dbug("geometryTick()");
+    geometry();
+    layoutVoices();
+    //drawGrid(bgCtx);
+    drawBg(bgCtx);
+    drawAnim(true);
+    }
+  }
+function geometry(){
+  vw=window.innerWidth;
+  vh=window.innerHeight;
+  var totalPx=vw*vh;
+  totalVoices=2;//iPhone4
+
+  if(totalPx>160000){totalVoices=3;}//16x9 iPhines
+  if(totalPx>160000){totalVoices=6;}//tablets
+
+  if(totalVoices<6){// phones
+    if(vw>vh){//landscape
+      cellsAcross=13*totalVoices;
+      cellsDown=11;
+      }
+    else{//portrait
+      cellsDown=11*totalVoices;
+      cellsAcross=13;
+      }
+      }
+  else{//tablets  
+    if(vw>vh){//landscape
+      cellsAcross=13*3;
+      cellsDown=11*2;
+    }
+    else{//portrait
+      cellsDown=11*3;
+      cellsAcross=13*2;
+      }
+    }
+  var vAspect=vw/vh;
+  var cAspect=cellsAcross/cellsDown;
+  leftPad=0;
+  topPad=0;
+  if(vAspect>cAspect){//fit height    
+    g=vh/cellsDown;
+    cw=Math.floor(g*cellsAcross);
+    ch=Math.floor(g*cellsDown);
+    leftPad=Math.floor(vw/2-cw/2);
+    }
+  else{//fit width
+    g=vw/cellsAcross;
+    cw=Math.floor(g*cellsAcross);
+    ch=Math.floor(g*cellsDown);
+    topPad=Math.floor(vh/2-ch/2);
+    }
+  bgCanv.width=cw;
+  bgCanv.height=ch;
+  bgCanv.style.left=leftPad+"px";
+  bgCanv.style.top=topPad+"px";
+  animCanv.width=cw;
+  animCanv.height=ch;
+  animCanv.style.left=leftPad+"px";
+  animCanv.style.top=topPad+"px";
+
+
+  cx=cellsAcross/2;
+  cy=cellsDown/2;
+
+  }
+
+function drawGrid(ctx){
+  ctx.lineWidth=1;
+  ctx.strokeStyle="#aaf";
+  ctx.beginPath();
+  for (var l=0; l<=cellsDown; l++){
+    ctx.moveTo(0+.5,l*g+.5);
+    ctx.lineTo(cellsAcross*g+.5,l*g+.5);
+    }
+  for (var l=0; l<=cellsAcross; l++){
+    ctx.moveTo(l*g+.5,0+.5);
+    ctx.lineTo(l*g+.5,cellsDown*g+.5);
+    }
+  ctx.stroke();
+  }
+function dbug(str) {
+  if(str==''){
+    ddiv.style.display = "none";
+    }
+  else{ddiv.style.display = "block";}
+  ddiv.innerHTML = str;
+  }
+function dbuga(str) {
+  ddiv.style.display = "block";
+  ddiv.innerHTML += "<br />"+str;
+  }
+
+</script>
+</head>
+<body id="body" onload="init()" >
+<canvas id="bgCanvas" style="background-color:#eee; position:absolute; margin:0px; left:0; top:0;"></canvas>
+<canvas id="animCanvas" style="position:absolute; margin:0px; left:0; top:0;"></canvas>
+<div id="debugDiv" style="position:absolute; margin:20px; background-color:rgba(255,255,255,.85);"></div>
+</body>
+</html>

@@ -59,7 +59,6 @@ function onStartClicked(){
         height: 200
     };
     window.plugin.CanvasCamera.start(options);
-    window.plugin.CanvasCamera.setCameraPosition(0);
 }
 function resumeInit(){
   }
@@ -71,6 +70,7 @@ function touchMove(e){
   }
 function touchEnd(e){
   e.preventDefault();
+  onStartClicked();
   }
 function oval(x,y,r0,r1,radians,counter){
   var ctx=animCtx;
@@ -188,8 +188,12 @@ function geometry(){
   bgCanv.height=ch;
   bgCanv.style.left=leftPad+"px";
   bgCanv.style.top=topPad+"px";
+  bgCanv.style.width=cw+"px";
+  bgCanv.style.height=ch+"px";
   animCanv.width=cw;
   animCanv.height=ch;
+  animCanv.style.width=cw+"px";
+  animCanv.style.height=ch+"px";
   animCanv.style.left=leftPad+"px";
   animCanv.style.top=topPad+"px";
 
@@ -228,7 +232,7 @@ function dbuga(str) {
 </head>
 <body id="body" onload="init()" >
 <canvas id="bgCanvas" style="background-color:#fcc; position:absolute; margin:0px; left:0; top:0;"></canvas>
-<canvas id="animCanvas" style="position:absolute; margin:0px; left:0; top:0;" ontouchend="onStartClicked();"></canvas>
+<canvas id="animCanvas" style="position:absolute; margin:0px; left:0; top:0;"></canvas>
 <div id="debugDiv" style="position:absolute; margin:20px; background-color:rgba(255,255,255,.35);"></div>
 </body>
 </html>

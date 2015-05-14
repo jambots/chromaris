@@ -46,7 +46,7 @@ function init(){
   geometryInterval=window.setInterval("geometryTick()", 100);
 
   document.addEventListener('deviceready', function () {
-    window.plugin.CanvasCamera.initialize(bcCanv);
+    window.plugin.CanvasCamera.initialize(bgCanv);
     }, false);
   }
 function onStartClicked(){

@@ -157,49 +157,32 @@ var cw=0;
 var ch=0;
 var cellsAcross=10;
 var cellsDown=20;
-var g=10;
+
 var leftPad=0;
 var topPad=0;
 var cx=0; 
 var cy=0;
-
+var g=64;
 function geometry(){
   vw=window.innerWidth;
   vh=window.innerHeight;
   var vAspect=vw/vh;
-  var cAspect=cellsAcross/cellsDown;
+  var cAspect=768/1024;
   leftPad=0;
   topPad=0;
-  if(vAspect>cAspect){//fit height    
-    g=vh/cellsDown;
-    cw=Math.floor(g*cellsAcross);
-    ch=Math.floor(g*cellsDown);
-    leftPad=Math.floor(vw/2-cw/2);
-    dbuga('fit height cw='+cw+' ch='+ch);
-    }
-  else{//fit width
-    dbuga('fit width');
-    g=vw/cellsAcross;
-    cw=Math.floor(g*cellsAcross);
-    ch=Math.floor(g*cellsDown);
-    topPad=Math.floor(vh/2-ch/2);
-    }
- 
-  bgCanv.width=cw;
-  bgCanv.height=ch;
+  bgCanv.width=vw;
+  bgCanv.height=vh;
   bgCanv.style.left=leftPad+"px";
   bgCanv.style.top=topPad+"px";
-  bgCanv.style.width=cw+"px";
-  bgCanv.style.height=ch+"px";
-  animCanv.width=cw;
-  animCanv.height=ch;
-  animCanv.style.width=cw+"px";
-  animCanv.style.height=ch+"px";
+  bgCanv.style.width=vw+"px";
+  bgCanv.style.height=vh+"px";
+  animCanv.width=vw;
+  animCanv.height=vh;
+  animCanv.style.width=vw+"px";
+  animCanv.style.height=vh+"px";
   animCanv.style.left=leftPad+"px";
   animCanv.style.top=topPad+"px";
 
-  cx=cellsAcross/2;
-  cy=cellsDown/2;
   drawGrid(animCtx);
   }
 
@@ -207,13 +190,13 @@ function drawGrid(ctx){
   ctx.lineWidth=2;
   ctx.strokeStyle="#aaf";
   ctx.beginPath();
-  for (var l=0; l<=cellsDown; l++){
+  for (var l=0; l<=vw; l+=g){
     ctx.moveTo(0,l*g);
-    ctx.lineTo(cellsAcross*g,l*g);
+    ctx.lineTo(vw,l*g);
     }
-  for (var l=0; l<=cellsAcross; l++){
+  for (var l=0; l<=vh; l+=g){
     ctx.moveTo(l*g,0);
-    ctx.lineTo(l*g,cellsDown*g);
+    ctx.lineTo(l*g,vh);
     }
   ctx.stroke();
   }

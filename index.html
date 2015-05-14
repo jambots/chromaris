@@ -50,12 +50,14 @@ function init(){
     }, false);
   }
 function onStartClicked(){
+  window.plugin.CanvasCamera.setCameraPosition(CanvasCamera.CameraPosition.FRONT);
+
     var options = {
         quality: 75,
         destinationType: CanvasCamera.DestinationType.DATA_URL,
         encodingType: CanvasCamera.EncodingType.JPEG,
-        width: 640,
-        height: 480
+        width: 100,
+        height: 100
     };
     window.plugin.CanvasCamera.start(options);
 }
@@ -168,18 +170,20 @@ function geometry(){
   leftPad=0;
   topPad=0;
   if(vAspect>cAspect){//fit height    
+    dbuga('fit height');
     g=vh/cellsDown;
     cw=Math.floor(g*cellsAcross);
     ch=Math.floor(g*cellsDown);
     leftPad=Math.floor(vw/2-cw/2);
     }
   else{//fit width
+    dbuga('fit width');
     g=vw/cellsAcross;
     cw=Math.floor(g*cellsAcross);
     ch=Math.floor(g*cellsDown);
     topPad=Math.floor(vh/2-ch/2);
     }
-  
+ 
   bgCanv.width=cw;
   bgCanv.height=ch;
   bgCanv.style.left=leftPad+"px";

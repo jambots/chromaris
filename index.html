@@ -158,7 +158,7 @@ function geometryTick(){
   animCtx.fillRect(0,g,vw*(myImageData["1"]/255), g);
   animCtx.fillStyle="blue";
   animCtx.fillRect(0,g*2,vw*(myImageData["2"]/255), g);
-  dbug(myImageData));
+  dbug(JSON.stringify(myImageData));
 
   if((window.innerWidth != vw)||(window.innerHeight != vh)){
     geometry();

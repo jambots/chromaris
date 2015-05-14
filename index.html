@@ -57,7 +57,7 @@ function onStartClicked(){
         destinationType: CanvasCamera.DestinationType.DATA_URL,
         encodingType: CanvasCamera.EncodingType.JPEG,
         width: 100,
-        height: 100
+        height: 200
     };
     window.plugin.CanvasCamera.start(options);
 }
@@ -228,7 +228,7 @@ function dbuga(str) {
 </head>
 <body id="body" onload="init()" >
 <canvas id="bgCanvas" style="Zbackground-color:#eee; position:absolute; margin:0px; left:0; top:0;"></canvas>
-<canvas id="animCanvas" style="position:absolute; margin:0px; left:0; top:0;" ontouchend="javascript:event.preventDefault(); onStartClicked();"></canvas>
+<canvas id="animCanvas" style="background-color:#999; position:absolute; margin:0px; left:0; top:0;" ontouchend="javascript:event.preventDefault(); onStartClicked();"></canvas>
 <div id="debugDiv" style="position:absolute; margin:20px; background-color:rgba(255,255,255,.35);"></div>
 </body>
 </html>

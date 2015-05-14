@@ -23,8 +23,14 @@ var animCanv;
 var animCtx;
 var bgCanv;
 var bcCtx;
+var meterCanv;
+var meterCtx;
+var meterInterval;
 function init(){
+  body.style.backgroundColor="rgb("+ bgColor.r +","+bgColor.g+","+bgColor.b+")";
   ddiv=document.getElementById('debugDiv');
+  meterCanv=document.getElementById('meterCanvas');
+  meterCtx=meterCanv.getContext("2d");
   bgCanv=document.getElementById('bgCanvas');
   bgCtx=bgCanv.getContext("2d");
   bgCtx.textAlign="center";
@@ -38,7 +44,10 @@ function init(){
     
   geometry();
   setupTrigger();
-  initVoices();
+  window.setTimeout("initVoices()", 1000);
+  }
+
+function resumeInit(){
   layoutVoices();
   
   //drawGrid(bgCtx);
@@ -47,19 +56,39 @@ function init(){
   drawAnim(true);
   animInterval=window.setInterval("drawAnim(false)", 25);
   }
-
+var beatTimeout;
 var touchStartX=0;
 var touchStartY=0;
 var touchingV=-1;
 var touchingP=-1;
 var audioTriggered=false;
+var startQueue=[];
+var randomizeTimeout;
+function startRandomizing(){
+  var playingCount=0;
+  for (var v=0; v<voices.length; v++){
+    playingCount+=Number(voices[v][0].selected);
+    }
+  if(playingCount==0){randomize=true;}
+  randomize=true; //hack to allow randomizing to start after delay.
 
-
+  //dbuga('randomize='+randomize);
+  }
 function touchStart(e){
+  randomize=false;
+  clearTimeout(randomizeTimeout);
+  randomizeTimeout=window.setTimeout('startRandomizing()', 30000);
   e.preventDefault();
   if(audioTriggered==false){
+    randomize=true;
     triggerSource.noteOn(0);
     audioTriggered=true;
+    var n = new Date();
+    var nowMs=n.getTime();
+    var ms=1000-(nowMs%1000);
+    //dbug('ms='+ms);
+    window.setTimeout("startBeat()", ms);  
+    drawBg();
     return false;
     }
 
@@ -69,13 +98,14 @@ function touchStart(e){
   var nearest=returnNearestPanel(touchStartX,touchStartY);
   touchingV=nearest.v
   touchingP=nearest.p
-  if(touchingP>0){
-    voices[touchingV][0].val=-1;
+  if(touchingP>0){// disconnect if edited
+    ////voices[touchingV][0].val=-1;
     if(voices[touchingV].running){
-      audioSources[touchingV].noteOff(0);
+      audioSources[touchingV].disconnect();
+      audioSources[touchingV]=null;
       voices[touchingV].running=false;
       }
-    drawAnim(true);
+    ////drawAnim(true);
     }
   touchMove(e);
   }
@@ -121,6 +151,125 @@ function touchMove(e){
   //dbuga(Math.floor(val*100)/100);
     }
   }
+var bgColor={"r":240, "g":240, "b":240};
+function meterTick(){
+  for(var v=0; v<voices.length; v++){
+    var x=g*(voices[v][0].x-3);
+    var y=g*(voices[v][0].y+2);
+    fadeMeter(meterCanv,x,y,g*11, g*2);
+    if(voices[v].running){
+      var array =  new Uint8Array(audioAnalysers[v].frequencyBinCount);
+      audioAnalysers[v].getByteFrequencyData(array);
+      //var red=99*(2-voices[v][1].selected);//reversed
+      //var green=99*((1+voices[v][2].selected)%3);//shift
+      //var blue=99*(2-voices[v][3].selected);//reverse
+      var red=99*voices[v][1].selected
+      var green=99*voices[v][2].selected;
+      var blue=99*voices[v][3].selected;      
+      var col="rgb("+red+","+green+","+blue+")";
+      
+      drawMeter(meterCanv, array,x,y,g*11, g*2, col);
+      }
+    }
+  }
+function startBeat(){
+  //dbuga('startBeat()');
+  var n = new Date();
+  var nowMs=n.getTime();
+  prevMs=nowMs;
+  prevDelay=995;
+  beatTimeout=window.setTimeout("beatTick()", prevDelay);  
+  }
+
+var prevMs=0;
+var prevDelay=0
+function beatTick(){
+  var n = new Date();
+  var nowMs=n.getTime();
+  //dbuga("beatTick"); 
+  var deltaMs=nowMs-prevMs;
+  prevMs=nowMs;
+  var slop=deltaMs-prevDelay;
+  delay=1000-slop
+  prevDelay=delay;     
+  //dbuga('slop='+slop);
+  //dbuga('delay='+delay);
+  beatTimeout=window.setTimeout("beatTick()", delay);
+  randomTick();
+  while(startQueue.length>0){
+    var startVoice=startQueue.pop();
+    //dbuga("startVoice="+startVoice);
+    voices[startVoice].running=true;
+    audioSources[startVoice].noteOn(0);
+    }
+  }
+function returnNowSel(v,p,tics){
+          var vOffset=100*v;
+          var pOffset=162*p;
+          var nowSec=Math.floor((200+prevMs)/(1000*randomBeats))*randomBeats;
+          var useSec=nowSec+vOffset+pOffset;
+          var raw=Math.sin(useSec/(randomBeats*17));
+          var frac=(1+raw)/2;
+          var scaled=frac*tics;
+          return Math.floor(scaled);
+  }
+
+var randomize=true;
+var randomCount=7;
+var randomBeats=8;
+function randomTick(){
+  if(randomize){
+    randomCount++;
+    if(randomCount>=randomBeats){
+      randomCount=0;
+      var changed=0;
+      var nowSec=Math.floor((200+prevMs)/(1000*randomBeats))*randomBeats;
+          
+      //dbug("randomTick() "+nowSec);
+      for (var v=0; v<voices.length; v++){
+        for (var p=0; p<voices[v].length; p++){
+          var sel=returnNowSel(v,p, voices[v][p].tics.length);
+          if(voices[v][p].selected != sel){
+            voices[v][p].selected=sel;
+            var step=4-voices[v][p].tics.length;
+            voices[v][p].val=-1+voices[v][p].selected*step;
+            //dbuga(" "+v+" "+p+" "+sel+" "+voices[v][p].val);
+            changed++;
+            if(p>0){// disconnect if edited
+              if(voices[v].running){
+                audioSources[v].disconnect();
+                audioSources[v]=null;
+                voices[v].running=false;
+                }
+              }
+
+            if(p==0){
+              if(voices[v][0].val==1){//on
+                var startItem=v;
+                startQueue.push(startItem);
+                //dbuga(" - noteOn for "+ v);
+                }
+              else{
+                if(voices[v].running){
+                  audioSources[v].disconnect();
+                  audioSources[v]=null;
+                  voices[v].running=false;
+                  }
+                setupAudio(v);
+                }
+              }
+            else{
+              setupAudio(v);
+              }
+
+            }
+          }
+        }
+      //dbuga("changed="+changed);
+      drawAnim(true);
+      }
+    }
+  }
 function touchEnd(e){
   e.preventDefault();
   if((touchingV != -1)&&(touchingP != -1)){
@@ -141,22 +290,19 @@ function touchEnd(e){
       panel.val=Math.floor(panel.val+.5);
       panel.selected=panel.val+1;
       }
-    //setupAudio(touchingV, touchingP, panel.tics[panel.selected]);
-
-    //dbuga("in touchEnd bufferV="+bufferV);
-    //audioSources[bufferV].start(0);
-
+    
     if(touchingP==0){
       if(voices[touchingV][0].val==1){//on
-        audioSources[touchingV].noteOn(0);
-        voices[touchingV].running=true;
+        var startItem=touchingV;
+        startQueue.push(startItem);
         //dbuga("noteOn for "+ touchingV);
         }
       else{
         if(voices[touchingV].running){
-          audioSources[touchingV].noteOff(0);
+          ////audioSources[touchingV].noteOff(0);
+          audioSources[touchingV].disconnect();
+          audioSources[touchingV]=null;
           voices[touchingV].running=false;
-          //dbuga("noteOff for "+ touchingV);
           }
         setupAudio(touchingV);
         }
@@ -220,30 +366,34 @@ function oval(x,y,r0,r1,radians,counter){
   //bez to perp
   //bez to end 
   }
+
 var voicePanel=[
   {"baseX":4, "baseY":3,"label":"VOICE ~", "orient":"horizontal", "tics":["OFF","ON"], "val":"-1", "selected":0},
   {"baseX":10, "baseY":3, "label":"RANGE", "orient":"vertical", "tics":["HIGH","MID","LOW"], "val":"-1", "selected":0},
-  {"baseX":4, "baseY":8, "label":"TRIG", "orient":"horizontal", "tics":["RND","ON","SYNC"], "val":"-1", "selected":0},
-  {"baseX":10, "baseY":8, "label":"OSC", "orient":"vertical", "tics":["NOISE","TONE","RING"], "val":"-1", "selected":0}
+  {"baseX":4, "baseY":9, "label":"TRIG", "orient":"horizontal", "tics":["RND","ON","SYNC"], "val":"-1", "selected":0},
+  {"baseX":10, "baseY":9, "label":"OSC", "orient":"vertical", "tics":["NOISE","TONE","RING"], "val":"-1", "selected":0}
+];
+
+
+
+var n64Panel=[
+  {"baseX":4, "baseY":3,"label":"VOICE ~", "orient":"horizontal", "tics":["OFF","ON"], "val":"-1", "selected":0},
+  {"baseX":10, "baseY":3, "label":"TYPE", "orient":"vertical", "tics":["0","1","2"], "val":"-1", "selected":0},
+  {"baseX":4, "baseY":9, "label":"CATEGORY", "orient":"horizontal", "tics":["0","1","2"], "val":"-1", "selected":0},
+  {"baseX":10, "baseY":9, "label":"SOUND", "orient":"vertical", "tics":["0","1","2"], "val":"-1", "selected":0}
 ];
 
 
 
 
-
-
-
-
-
+var leds=[];
 var voices=[];
-var audioContexts=[];
+////var audioContexts=[];
 var audioSources=[];
-var bufferV=0;
+var audioAnalysers=[];
 var audioTriggered=false;
 var triggerContext;
 var triggerSource;
-var testContext;
-var testSource;
 
 function setupTrigger(){
   triggerContext=new webkitAudioContext();
@@ -253,12 +403,6 @@ function setupTrigger(){
   request.addEventListener('load', bufferTrigger, false);
   request.send();
 
-  testContext=new webkitAudioContext();
-  request = new XMLHttpRequest();
-  request.open('GET', "mp3/test.mp3", true);
-  request.responseType = 'arraybuffer';
-  request.addEventListener('load', bufferTest, false);
-  request.send();
   }
 function bufferTrigger(event) {
     var request = event.target;
@@ -267,90 +411,180 @@ function bufferTrigger(event) {
     triggerSource = source;
     source.connect(triggerContext.destination);
   }
-function bufferTest(event) {
-    var request = event.target;
-    var source = testContext.createBufferSource();
-    source.buffer = testContext.createBuffer(request.response, false);
-    testSource = source;
-    source.connect(testContext.destination);
-  }
 function setupAudio(v){
-  bufferV=v;
-
   var range=voices[v][1].tics[voices[v][1].selected];
   var sync=voices[v][2].tics[voices[v][2].selected];
   var osc=voices[v][3].tics[voices[v][3].selected];
-  var url="mp3/"+range+"_"+sync+"_"+osc+".mp3";
+  //var url="mp3/"+range+"_"+sync+"_"+osc+".mp3";
+  var url="n128/"+range+"_"+sync+"_"+osc+".mp3";
   url=url.toLowerCase();
   voices[v].running = false;
   //dbuga('setupAudio('+url+')');
-  body.style.backgroundColor="red";
-  
-request = new XMLHttpRequest();
+  //body.style.backgroundColor="yellow";
+  leds[v]="yellow";
+  drawLeds();
+  request = new XMLHttpRequest();
 request.open('GET', url, true);
 request.responseType = 'arraybuffer';
 request.addEventListener('load', bufferSound, false);
+request.v=v;
 request.send();
 
 }
+var highest=0;
+function drawLeds(){
+  for (var v=0; v<voices.length; v++){
+    var x=g*(voices[v][0].x);
+    var y=g*(voices[v][0].y+1.25);
+    bgCtx.fillStyle=leds[v];
+    bgCtx.strokeStyle="#444";
+    bgCtx.lineWidth=g/6;
+    bgCtx.beginPath();
+    bgCtx.arc(x,y,g/3,0,pi*2,true);
+    bgCtx.stroke();
+    bgCtx.fill();
+    }
+  }
 function bufferSound(event) {
-    document.getElementById('body').style.backgroundColor="green";
-    //alert(JSON.stringify(event));
-    //alert(str);
+    //document.getElementById('body').style.backgroundColor="green";
     var request = event.target;
-    var source = audioContexts[bufferV].createBufferSource();
-    source.buffer = audioContexts[bufferV].createBuffer(request.response, false);
-    audioSources[bufferV] = source;
-    audioSources[bufferV].loop=true;
+    //dbuga("bufferSound() v="+request.v);
+    leds[request.v]="green";
+    drawLeds();
+    var source = triggerContext.createBufferSource();
+    source.buffer = triggerContext.createBuffer(request.response, false);
+    audioSources[request.v] = source;
+    audioSources[request.v].loop=true;
 
-    source.connect(audioContexts[bufferV].destination);
-    //dbuga("bufferSound bufferV="+bufferV);
+    source.connect(triggerContext.destination);
+
+    audioAnalysers[request.v].smoothingTimeConstant = 0.3;
+    audioAnalysers[request.v].fftSize = 512;
+    source.connect(audioAnalysers[request.v]);
+
+    //audioAnalysers[request.v].connect(triggerContext.destination);
+    if((voices[request.v][0].val==1)){
+      startQueue.push(request.v)
+      }
+ 
+
+    //dbuga("bufferSound request.v="+request.v);
     buffCount++;
     if(buffCount<voices.length){
       setupAudio(buffCount);
       }
-    //if(buffCount==voices.length){dbug('ready!');}
+    if(buffCount==voices.length){
+      //dbug('ready!');
+      meterInterval=window.setInterval("meterTick()", 40);
+      }
+  }
+function fadeMeter(theCanv, x, y, w, h){
+  var ctx=theCanv.getContext("2d");
+  ctx.fillStyle="rgba("+ bgColor.r +","+bgColor.g+","+bgColor.b+",.4)";
+  //ctx.fillStyle="rgba(0,0,0,.4)";
+  ctx.fillRect(x,y,w,h);
+  }
+function drawMeter(theCanv, theArray, x, y, w, h, c){
+      var ctx=theCanv.getContext("2d");
+      var logArray=[];
+      var step=1;
+      for (var a=0; a<200; a+=step){
+        step*=1.1;
+        logArray.push(theArray[Math.floor(a)]);
+        if(theArray[Math.floor(a)]>0){
+          if(a>highest){highest=a;}
+          }
+        }
+/*
+      var grd=ctx.createLinearGradient(x,y,x,y+h);
+      grd.addColorStop(0,"rgb(200,200,200)");
+      grd.addColorStop(.5,"rgb(100,100,100)");
+      grd.addColorStop(1,"rgb(200,200,200)");
+      //grd.addColorStop(0,"black");
+      //grd.addColorStop(.5,"white");
+      //grd.addColorStop(1,"blue");
+      ctx.fillStyle=grd;
+*/
+      ctx.fillStyle=c;
+      for (var a=0; a<logArray.length; a++){
+        var frac=(1+logArray[a])/255;
+        ctx.fillRect(x+w*a/logArray.length,y+h*(.5-frac/2),w/logArray.length*.8,h*frac);
+        }
+  }
 
-    //window.setTimeout("startBuffer()", 4000);
-    //startBuffer();
-  }
-function startBuffer(){
-  //dbuga('startBuffer() '+bufferV);
-  audioSources[bufferV].start();
-  }
+
+function bez(ctx,x0,y0,deg0,dist0,x1,y1,deg1,dist1){
+  var cp0x=x0+dist0*Math.cos(deg0/180 * Math.PI);
+  var cp0y=y0+dist0*Math.sin(deg0/180 * Math.PI);
+  var cp1x=x1-dist1*Math.cos(deg1/180 * Math.PI);
+  var cp1y=y1-dist1*Math.sin(deg1/ 180 * Math.PI);
+  ctx.bezierCurveTo(cp0x, cp0y, cp1x,cp1y, x1,y1);
+}
+
+
+
+ function getAverageVolume(array) {
+     var values = 0;
+     var average;
+
+     var length = array.length;
+
+     // get all the frequency amplitudes
+     for (var i = 0; i < length; i++) {
+         values += array[i];
+     }
+
+     average = values / length;
+     return average;
+ }
 
 function initVoices(){
-  audioContexts=[];
-  audioSources=[];
+  var n = new Date();
+  var nowMs=n.getTime();
+  prevMs=nowMs;
 
+  audioSources=[];
+  audioAnalysers=[];
+  leds=[];
+  
   voices=[];
   for (var v=0; v<totalVoices; v++){
-    var newAudioContext=new webkitAudioContext();
+    leds.push("yellow");
     var newSource="";
-    audioContexts.push(newAudioContext);
     audioSources.push(newSource);
+    var analyser = triggerContext.createAnalyser();
+    audioAnalysers.push(analyser);
     var thisPanel=[];
     thisPanel.url="";
     thisPanel.running=false;
-    for(p=0; p<voicePanel.length; p++){
-      var vp= JSON.parse(JSON.stringify(voicePanel[p]));
+    for(p=0; p<n64Panel.length; p++){
+      var vp= JSON.parse(JSON.stringify(n64Panel[p]));
       vp.label=vp.label.replace("~", 1+voices.length);
       vp.x=vp.baseX;
       vp.y=vp.baseY;
       vp.v=v;
       vp.p=p;
+      if(p>0){
+        vp.selected=returnNowSel(v,p,3);
+        var frac=vp.selected/(vp.tics.length-1);
+        var step=4-vp.tics.length;
+        vp.val=-1+frac*step*2;
+        //dbuga(" val="+vp.val+" frac="+frac+" "+step+" "+vp.tics[vp.selected]);
+        }
       thisPanel.push(vp);
       }
     voices.push(thisPanel);
     }
+    
   //dbuga('initVoices() '+voices.length);
   buffCount=0;
   setupAudio(0);
+  resumeInit();
   }
 var buffCount;
 function layoutVoices(){
   var v=0;
-  for(var y=0; y<cellsDown; y+=11){
+  for(var y=0; y<cellsDown; y+=12){
     for(var x=0; x<cellsAcross; x+=13){
       for(var p=0; p<voices[v].length; p++){
         voices[v][p].x=voices[v][p].baseX+x;
@@ -364,18 +598,30 @@ function layoutVoices(){
   }
 function drawBg(){
   //dbuga('drawBg()');
+  bgCanv.width=cw;
   for (var v=0; v<voices.length; v++){
     var thisVoice=voices[v];
-    bgCtx.fillStyle="rgba(200,200,200,.15)";
+    bgCtx.fillStyle="rgba("+ bgColor.r +","+bgColor.g+",255,.5)";
     bgCtx.strokeStyle="#888";
     bgCtx.lineWidth=g/6;
-    roundRect(bgCtx, g*(thisVoice[0].x-3.5), g*(thisVoice[0].y-2.5), g*12, g*10, g, true, true);
+    roundRect(bgCtx, g*(thisVoice[0].x-3.5), g*(thisVoice[0].y-2.5), g*12, g*11, g, false, true);
     for (var p=0; p<thisVoice.length; p++){
       var val=0;
       var vp=thisVoice[p];
       toggleBg(vp.x,vp.y,vp.orient,val, vp.tics, vp.label);
       }
     }
+  if(audioTriggered==false){
+    bgCtx.font=g*3.5+"px Arial";
+    bgCtx.strokeStyle="#FFF";
+    bgCtx.fillStyle="#F00";
+    bgCtx.textAlign="center";
+    bgCtx.textBaseline="middle";
+    bgCtx.lineWidth=g/2;
+    bgCtx.strokeText("TAP TO BEGIN", bgCanv.width/2, bgCanv.height/2);
+    bgCtx.fillText("TAP TO BEGIN", bgCanv.width/2, bgCanv.height/2);
+    }
+  drawLeds();
   }
 function drawAnim(force){
   for (var v=0; v<voices.length; v++){
@@ -453,10 +699,10 @@ function toggleBg(x0,y0,orient,pos, tics, label){//returns path
     if(label.indexOf("VOICE")>-1){
       ctx.lineWidth=1;
       ctx.font=g/1.25+"px Arial";
-      ctx.strokeText(label, x0*g,y0*g-g*1.5);
+      ctx.strokeText(label, x0*g,y0*g-g*1.25);
       }
     
-    ctx.fillText(label, x0*g,y0*g-g*1.5);
+    ctx.fillText(label, x0*g,y0*g-g*1.25);
     }
   else{
     var min=(y0-slot)*g;
@@ -540,7 +786,7 @@ function toggleSwitch(x0,y0,orient,pos, tics, label){
   oval(mx1*g,my1*g,g/2,squeeze*g/2,vec+pi/2,true)
   ctx.arc(x2*g,y2*g,g/2,vec+pi*1.5,vec+pi*.5,true);
   ctx.closePath();
-  ctx.fillStyle="#eee";
+  ctx.fillStyle="rgb("+ bgColor.r +","+bgColor.g+","+bgColor.b+")";
   ctx.fill();
   ctx.stroke();
   ctx.beginPath();
@@ -578,20 +824,20 @@ function geometry(){
   if(totalVoices<6){// phones
     if(vw>vh){//landscape
       cellsAcross=13*totalVoices;
-      cellsDown=11;
+      cellsDown=12;
       }
     else{//portrait
-      cellsDown=11*totalVoices;
+      cellsDown=12*totalVoices;
       cellsAcross=13;
       }
       }
   else{//tablets  
     if(vw>vh){//landscape
       cellsAcross=13*3;
-      cellsDown=11*2;
+      cellsDown=12*2;
     }
     else{//portrait
-      cellsDown=11*3;
+      cellsDown=12*3;
       cellsAcross=13*2;
       }
     }
@@ -611,6 +857,7 @@ function geometry(){
     ch=Math.floor(g*cellsDown);
     topPad=Math.floor(vh/2-ch/2);
     }
+  
   bgCanv.width=cw;
   bgCanv.height=ch;
   bgCanv.style.left=leftPad+"px";
@@ -619,7 +866,11 @@ function geometry(){
   animCanv.height=ch;
   animCanv.style.left=leftPad+"px";
   animCanv.style.top=topPad+"px";
-
+  meterCanv.width=cw;
+  meterCanv.height=ch;
+  meterCanv.style.left=leftPad+"px";
+  meterCanv.style.top=topPad+"px";
+  meterCanv.style.backgroundColor="rgb("+ bgColor.r +","+bgColor.g+","+bgColor.b+")";
 
   cx=cellsAcross/2;
   cy=cellsDown/2;
@@ -655,8 +906,14 @@ function dbuga(str) {
 </script>
 </head>
 <body id="body" onload="init()" >
-<canvas id="bgCanvas" style="background-color:#eee; position:absolute; margin:0px; left:0; top:0;"></canvas>
+<canvas id="meterCanvas" style="position:absolute; margin:0px; left:0; top:0;"></canvas>
+<canvas id="bgCanvas" style="Zbackground-color:#eee; position:absolute; margin:0px; left:0; top:0;"></canvas>
 <canvas id="animCanvas" style="position:absolute; margin:0px; left:0; top:0;"></canvas>
-<div id="debugDiv" style="position:absolute; margin:20px; background-color:rgba(255,255,255,.85);"></div>
+<div id="debugDiv" style="position:absolute; margin:20px; background-color:rgba(255,255,255,.35);"></div>
 </body>
 </html>
+
+
+
+
+

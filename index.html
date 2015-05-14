@@ -190,11 +190,11 @@ function drawGrid(ctx){
   ctx.lineWidth=2;
   ctx.strokeStyle="#aaf";
   ctx.beginPath();
-  for (var l=0; l<=vw; l+=g){
+  for (var l=0; l<=vh; l+=g){
     ctx.moveTo(0,l*g);
     ctx.lineTo(vw,l*g);
     }
-  for (var l=0; l<=vh; l+=g){
+  for (var l=0; l<=vw; l+=g){
     ctx.moveTo(l*g,0);
     ctx.lineTo(l*g,vh);
     }

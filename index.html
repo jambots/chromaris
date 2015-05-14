@@ -47,6 +47,7 @@ function init(){
 
   document.addEventListener('deviceready', function () {
     window.plugin.CanvasCamera.initialize(bgCanv);
+    onStartClicked();
     }, false);
   }
 function onStartClicked(){
@@ -71,7 +72,7 @@ function touchMove(e){
   }
 function touchEnd(e){
   e.preventDefault();
-  onStartClicked();
+  
   }
 function oval(x,y,r0,r1,radians,counter){
   var ctx=animCtx;
@@ -149,6 +150,9 @@ function rnd(range){
   return Math.floor(Math.random()*range);
   }
 function geometryTick(){
+  var myImageData = bgCtx.getImageData(cx, cy, 1, 1);
+  dbug(JSON.stringify(myImageData));
+
   if((window.innerWidth != vw)||(window.innerHeight != vh)){
     geometry();
     }
@@ -182,24 +186,33 @@ function geometry(){
   animCanv.style.height=vh+"px";
   animCanv.style.left=leftPad+"px";
   animCanv.style.top=topPad+"px";
-
+  cx=vw/2;
+  cy=vh/2;
   drawGrid(animCtx);
+
   }
 
 function drawGrid(ctx){
+
   ctx.lineWidth=2;
   ctx.strokeStyle="#aaf";
   ctx.beginPath();
   for (var l=0; l<=vh; l+=g){
-    ctx.moveTo(0,l*g);
-    ctx.lineTo(vw,l*g);
+    ctx.moveTo(0,l);
+    ctx.lineTo(vw,l);
     }
   for (var l=0; l<=vw; l+=g){
-    ctx.moveTo(l*g,0);
-    ctx.lineTo(l*g,vh);
+    ctx.moveTo(l,0);
+    ctx.lineTo(l,vh);
     }
   ctx.stroke();
+  ctx.strokeStyle="#fff";
+  ctx.beginPath();
+  ctx.arc(cx,cy,g/2,0,pi*2,true);
+  ctx.stroke();
+
   }
+var pi=Math.PI;
 function dbug(str) {
   if(str==''){
     ddiv.style.display = "none";

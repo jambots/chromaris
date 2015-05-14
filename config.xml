@@ -2,15 +2,15 @@
     <widget xmlns = "http://www.w3.org/ns/widgets"
         xmlns:gap = "http://phonegap.com/ns/1.0"
         xmlns:android = "http://schemas.android.com/apk/res/android"
-        id        = "com.jambots.chromaris"
+        id        = "com.jambots.cockpit"
         versionCode="1" 
         version   = "1.01">
 
     <!-- versionCode is optional and Android only -->
 <preference name="phonegap-version" value="3.7.0" />
 <preference name="webviewbounce" value="false" />
-<name>Chromaris</name>
-<description>Ambient Drones of the Chroma Polaris</description>
+<name>cockpit</name>
+<description>War Toy</description>
 <gap:platform name="ios" />
 <gap:platform name="android" />
 
@@ -34,10 +34,9 @@
 <feature name="http://api.phonegap.com/1.0/network" />
 <feature name="http://api.phonegap.com/1.0/notification" />
 <feature name="http://api.phonegap.com/1.0/media" />
-<!--
-<feature name="http://api.phonegap.com/1.0/file" />
--->
 <feature name="http://api.phonegap.com/1.0/device" />
+
+<gap:plugin name="com.keith.cordova.plugin.canvascamera" version="1.0.1" />
 
 
 <!-- Define app icon for each platform. -->

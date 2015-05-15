@@ -188,7 +188,7 @@ function geometryTick(){
   animCtx.lineWidth=2;
   animCtx.strokeStyle="white";
   animCtx.beginPath();
-  animCtx.arc(cx,cy,retRad,0,pi*2,true);
+  animCtx.arc(cx,cy,retRad*1.7,0,pi*2,true);
   animCtx.moveTo(cx-retRad, cy);     
   animCtx.lineTo(cx-retRad/3, cy);  
   animCtx.moveTo(cx+retRad, cy);     
@@ -282,6 +282,7 @@ function geometry(){
   bgCanv.style.top=topPad+"px";
   bgCanv.style.width=vw+"px";
   bgCanv.style.height=vh+"px";
+  bgCtx.scale(-1, 1)
   animCanv.width=vw;
   animCanv.height=vh;
   animCanv.style.width=vw+"px";

@@ -282,7 +282,7 @@ function geometry(){
   bgCanv.style.top=topPad+"px";
   bgCanv.style.width=vw+"px";
   bgCanv.style.height=vh+"px";
-  bgCtx.scale(-1, 1)
+  //bgCtx.scale(-1, 1)
   animCanv.width=vw;
   animCanv.height=vh;
   animCanv.style.width=vw+"px";
@@ -327,7 +327,7 @@ function dbuga(str) {
 </script>
 </head>
 <body id="body" onload="init()" >
-<canvas id="bgCanvas" style="background-color:#fcc; position:absolute; margin:0px; left:0; top:0;"></canvas>
+<canvas id="bgCanvas" style="background-color:#fcc; position:absolute; margin:0px; left:0; top:0; -webkit-transform: scale(-1, 1);"></canvas>
 <canvas id="animCanvas" style="position:absolute; margin:0px; left:0; top:0;"></canvas>
 <div id="debugDiv" style="position:absolute; margin:20px; background-color:rgba(255,255,255,.35);"></div>
 </body>

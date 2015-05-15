@@ -178,8 +178,8 @@ function normalRgb(r,g,b){
   var blueFrac=b/max;
   return {"r":redFrac, "g":greenFrac, "b":blueFrac};
   }
-var retRad=32;
-var sampleRad=4;
+var retRad=50;
+var sampleRad=10;
 function geometryTick(){
   animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
   var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
@@ -213,13 +213,14 @@ function geometryTick(){
   animCtx.fillRect(0,g,vw*greenFrac, g);
   animCtx.fillStyle="blue";
   animCtx.fillRect(0,g*2,vw*blueFrac, g);
-  animCtx.lineWidth=1;
+  animCtx.lineWidth=2;
   animCtx.strokeStyle="white";
   animCtx.beginPath();
   animCtx.arc(cx+retRad, cy+retRad, sampleRad, 0, pi*2, true);
   animCtx.stroke();
   if(saturationRgb(redFrac,greenFrac,blueFrac)>.5){
     animCtx.fillStyle="rgb("+Math.floor(redFrac*255)+", "+Math.floor(greenFrac*255)+", "+Math.floor(blueFrac*255)+")";
+    animCtx.fill()
     }
   //dbug("max="+max);
   //dbuga("redFrac="+Math.floor(redFrac*100)/100);
@@ -242,9 +243,8 @@ var cx=0;
 var cy=0;
 var g=76.8;
 var colors=[
-  {"name":"pink", "r":1, "g":.4, "b":.6},
-  {"name":"red", "r":1, "g":.3, "b":.5},
-  {"name":"orange", "r":1, "g":.5, "b":.3},
+  {"name":"red", "r":1, "g":.25, "b":.3},
+  {"name":"orange", "r":1, "g":.6, "b":.3},
   {"name":"yellow", "r":1, "g":.8, "b":.25},
   {"name":"green", "r":.3, "g":1, "b":.6},
   {"name":"blue", "r":.2, "g":.3, "b":1}

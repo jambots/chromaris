@@ -195,7 +195,7 @@ function reticule(color){
   animCtx.stroke(); 
 }
 function geometryTick(){
-  dbug('');
+  //dbug('');
   var samples=[{"x":0,"y":0}, {"x":retRad*2-1,"y":0}, {"x":retRad*2-1,"y":retRad*2-1}, {"x":0, "y":retRad*2-1}];
   
   animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
@@ -211,11 +211,11 @@ function geometryTick(){
     var rgb={"r":myImageData.data[""+(offset)], "g":myImageData.data[""+(offset+1)], "b":myImageData.data[""+(offset+2)]};
     samples[s].rgb=rgb;
     samples[s].nRgb=normalRgb(rgb);
-    dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
+    //dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
 
     animCtx.beginPath();
     animCtx.arc(cx+samples[s].x-retRad, cy+samples[s].y-retRad, sampleRad, 0, pi*2, true);
-    if(saturationRgb(samples[s].nRgb)>.45){
+    if(saturationRgb(samples[s].nRgb)>.35){
       var colorName=colorNearestRgb(samples[s].nRgb);
       var lockWas=lockByColorName[colorName];
       lockByColorName[colorName]+=.05;
@@ -239,11 +239,11 @@ function geometryTick(){
       highestColorName=colorNames[c];
       }
     }
-  dbuga("highestFrac="+ highestFrac);
-  dbuga("highestColorName ="+ highestColorName);
+  //dbuga("highestFrac="+ highestFrac);
+  //dbuga("highestColorName ="+ highestColorName);
 
   animCtx.lineWidth=8;
-  animCtx.strokeStyle="white";
+  animCtx.strokeStyle="rgba(255,255,255,.5)";
   animCtx.beginPath();
   animCtx.arc(cx,cy,retRad*2,0,pi*2,true);
   animCtx.stroke();

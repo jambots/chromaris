@@ -158,13 +158,21 @@ function rnd(range){
   }
 function geometryTick(){
   var myImageData = bgCtx.getImageData(cx, cy, 1, 1);
+  var max=0;
+  for (var c=0; c<3; c++){
+    if(myImageData.data[""+c+""]>max){max=myImageData.data[""+c+""];}
+    }
+  var redFrac=myImageData.data["0"]/max;
+  var greenFrac=myImageData.data["1"]/max;
+  var blueFrac=myImageData.data["2"]/max;
+
   animCtx.clearRect(0,0,vw,g*3);
   animCtx.fillStyle="red";
-  animCtx.fillRect(0,0,vw*(myImageData.data["0"]/255), g);
+  animCtx.fillRect(0,0,vw*redFrac, g);
   animCtx.fillStyle="green";
-  animCtx.fillRect(0,g,vw*(myImageData.data["1"]/255), g);
+  animCtx.fillRect(0,g,vw*greenFrac, g);
   animCtx.fillStyle="blue";
-  animCtx.fillRect(0,g*2,vw*(myImageData.data["2"]/255), g);
+  animCtx.fillRect(0,g*2,vw*blueFrac, g);
   //dbug(JSON.stringify(myImageData));
 
   if((window.innerWidth != vw)||(window.innerHeight != vh)){

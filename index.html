@@ -46,10 +46,24 @@ function init(){
   geometryInterval=window.setInterval("geometryTick()", 100);
 
   document.addEventListener('deviceready', function () {
+  accelWatch = navigator.accelerometer.watchAcceleration(accelerometerSuccess,
+                                                       accelerometerError,
+                                                       500);
     window.plugin.CanvasCamera.initialize(bgCanv);
     onStartClicked();
     }, false);
   }
+var accelWatch;
+function accelerometerSuccess(e){
+  dbug("x:"+e.x);
+  dbuga("y:"+e.y);
+  dbuga("z:"+e.z);
+
+  }
+function accelerometerError(e){
+  dbug('Error A');
+  }
+
 function onStartClicked(){
   
     var options = {

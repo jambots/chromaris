@@ -28,7 +28,7 @@ var bgColor={"r":240, "g":240, "b":240};
 var geometryInterval;
 var vw=0;
 var vh=0;
-
+var front=false;
 function init(){
   body.style.backgroundColor="rgb("+ bgColor.r +","+bgColor.g+","+bgColor.b+")";
   ddiv=document.getElementById('debugDiv');
@@ -60,12 +60,19 @@ function onStartClicked(){
         height: 100
     };
     window.plugin.CanvasCamera.start(options);
-    window.plugin.CanvasCamera.setCameraPosition(CanvasCamera.CameraPosition.FRONT);
 }
 function resumeInit(){
   }
 function touchStart(e){
   e.preventDefault();
+  if(front==false){
+    front=true;
+    window.plugin.CanvasCamera.setCameraPosition(CanvasCamera.CameraPosition.FRONT);
+    }
+  else{
+    front=false;
+    window.plugin.CanvasCamera.setCameraPosition(CanvasCamera.CameraPosition.BACK);
+    }
   }
 function touchMove(e){
   e.preventDefault();

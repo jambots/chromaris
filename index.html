@@ -178,13 +178,26 @@ function normalRgb(rgb){
   var blueFrac=rgb["b"]/max;
   return {"r":redFrac, "g":greenFrac, "b":blueFrac};
   }
-var retRad=10;
+var retRad=40;
 var sampleRad=10;
 function geometryTick(){
   dbug('');
   var samples=[{"x":0,"y":0}, {"x":retRad*2-1,"y":0}, {"x":retRad*2-1,"y":retRad*2-1}, {"x":0, "y":retRad*2-1}];
   
   animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
+  animCtx.lineWidth=2;
+  animCtx.strokeStyle="white";
+  animCtx.beginPath();
+  animCtx.arc(cx,cy,retRad,0,pi*2,true);
+  animCtx.moveTo(cx-retRad, cy);     
+  animCtx.lineTo(cx-retRad/3, cy);  
+  animCtx.moveTo(cx+retRad, cy);     
+  animCtx.lineTo(cx+retRad/3, cy);  
+  animCtx.moveTo(cx,cy-retRad);
+  animCtx.lineTo(cx,cy-retRad/3);  
+  animCtx.moveTo(cx,cy+retRad);
+  animCtx.lineTo(cx,cy+retRad/3);  
+  animCtx.stroke(); 
   var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
   for (var s=0; s<samples.length; s++){
     var offsetX=4*samples[s].x;
@@ -194,7 +207,6 @@ function geometryTick(){
     samples[s].rgb=rgb;
     samples[s].nRgb=normalRgb(rgb);
     dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
-    animCtx.lineWidth=2;
     animCtx.beginPath();
     animCtx.arc(cx+samples[s].x-retRad, cy+samples[s].y-retRad, sampleRad, 0, pi*2, true);
     if(saturationRgb(samples[s].nRgb)>.5){
@@ -278,7 +290,7 @@ function geometry(){
   animCanv.style.top=topPad+"px";
   cx=vw/2;
   cy=vh/2;
-  drawGrid(animCtx);
+  //drawGrid(animCtx);
 
   }
 

@@ -173,7 +173,10 @@ function geometryTick(){
   animCtx.fillRect(0,g,vw*greenFrac, g);
   animCtx.fillStyle="blue";
   animCtx.fillRect(0,g*2,vw*blueFrac, g);
-  //dbug(JSON.stringify(myImageData));
+  dbug("max="+max);
+  dbuga("redFrac="+Math.floor(redFrac*100)/100);
+  dbuga("greenFrac="+Math.floor(greenFrac*100)/100);
+  dbuga("blueFrac="+Math.floor(blueFrac*100)/100);
 
   if((window.innerWidth != vw)||(window.innerHeight != vh)){
     geometry();

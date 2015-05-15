@@ -196,6 +196,12 @@ function reticule(color){
   animCtx.lineTo(cx,cy+retRad/3);  
   animCtx.stroke(); 
 }
+function loadAndPlayAudioTitle(url){
+  dbuga("loadAndPlayAudioTitle("+url+")");
+  var audio = new Audio(url);
+  audio.play();
+  }
+
 function geometryTick(){
   //dbug('');
   var samples=[{"x":0,"y":0}, {"x":retRad*2-1,"y":0}, {"x":retRad*2-1,"y":retRad*2-1}, {"x":0, "y":retRad*2-1}];
@@ -222,6 +228,7 @@ function geometryTick(){
       var lockWas=lockByColorName[colorName];
       lockByColorName[colorName]+=.05;
       if(lockByColorName[colorName]>1){lockByColorName[colorName]=1;}
+      if((lockByColorName[colorName]==1)&&(lockWas != 1)){loadAndPlayAudio("cockpitmp3/"+colorName+".mp3");}
       var rgb=rgbByColorName(colorName);
       animCtx.fillStyle="rgb("+Math.floor(rgb["r"]*255)+", "+Math.floor(rgb["g"]*255)+", "+Math.floor(rgb["b"]*255)+")";
       animCtx.fill()

@@ -178,7 +178,7 @@ function normalRgb(rgb){
   var blueFrac=rgb["b"]/max;
   return {"r":redFrac, "g":greenFrac, "b":blueFrac};
   }
-var retRad=50;
+var retRad=10;
 var sampleRad=10;
 function geometryTick(){
   dbug('');
@@ -193,7 +193,7 @@ function geometryTick(){
     var rgb={"r":myImageData[""+(offset)], "g":myImageData[""+(offset+1)], "b":myImageData[""+(offset+2)]};
     samples[s].rgb=rgb;
     samples[s].nRgb=normalRgb(rgb);
-    dbuga(JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
+    dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
     animCtx.lineWidth=2;
     animCtx.beginPath();
     animCtx.arc(cx+samples[s].x-retRad, cy+samples[s].y-retRad, sampleRad, 0, pi*2, true);

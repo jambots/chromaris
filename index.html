@@ -168,16 +168,44 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
 function rnd(range){
   return Math.floor(Math.random()*range);
   }
-function geometryTick(){
-  var myImageData = bgCtx.getImageData(cx, cy, 1, 1);
-  var max=0;
-  for (var c=0; c<3; c++){
-    if(myImageData.data[""+c+""]>max){max=myImageData.data[""+c+""];}
-    }
-  var redFrac=myImageData.data["0"]/max;
-  var greenFrac=myImageData.data["1"]/max;
-  var blueFrac=myImageData.data["2"]/max;
+function normalRgb(r,g,b){
+  var max=r;
+  if(g>max){max=g;}
+  if(b>max){max=b;}
 
+  var redFrac=r/max;
+  var greenFrac=g/max;
+  var blueFrac=b/max;
+  return {"r":redFrac, "g":greenFrac, "b":blueFrac};
+  }
+var retRad=32;
+var sampleRad=4;
+function geometryTick(){
+  animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
+  var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
+  var tlR=myImageData.data["0"];
+  var tlG=myImageData.data["1"];
+  var tlB=myImageData.data["2"];
+  var offset=(retRad*2-1)*4;
+  var trR=myImageData.data[""+(offset)];
+  var trG=myImageData.data[""+(offset+1)];
+  var trB=myImageData.data[""+(offset+2)];
+  var offset=(retRad*2)*4*(retRad*2-1);
+  var blR=myImageData.data[""+(offset)];
+  var blG=myImageData.data[""+(offset+1)];
+  var blB=myImageData.data[""+(offset+2)];
+  var offset=(retRad*2)*4*(retRad*2)-4;
+  var brR=myImageData.data[""+(offset)];
+  var brG=myImageData.data[""+(offset+1)];
+  var brB=myImageData.data[""+(offset+2)];
+
+  
+
+  var max=0;
+  var nRgb=normalRgb(brR, brG, brB);
+  var redFrac=nRgb["r"];
+  var greenFrac=nRgb["g"];
+  var blueFrac=nRgb["b"];
   animCtx.clearRect(0,0,vw,g*3);
   animCtx.fillStyle="red";
   animCtx.fillRect(0,0,vw*redFrac, g);
@@ -185,12 +213,20 @@ function geometryTick(){
   animCtx.fillRect(0,g,vw*greenFrac, g);
   animCtx.fillStyle="blue";
   animCtx.fillRect(0,g*2,vw*blueFrac, g);
+  animCtx.lineWidth=1;
+  animCtx.strokeStyle="white";
+  animCtx.beginPath();
+  animCtx.arc(cx+retRad, cy+retRad, sampleRad, 0, pi*2, true);
+  animCtx.stroke();
+  if(saturationRgb(redFrac,greenFrac,blueFrac)>.5){
+    animCtx.fillStyle="rgb("+Math.floor(redFrac*255)+", "+Math.floor(greenFrac*255)+", "+Math.floor(blueFrac*255)+")";
+    }
   //dbug("max="+max);
   //dbuga("redFrac="+Math.floor(redFrac*100)/100);
   //dbuga("greenFrac="+Math.floor(greenFrac*100)/100);
   //dbuga("blueFrac="+Math.floor(blueFrac*100)/100);
   dbug(colorNearestRgb(redFrac,greenFrac,blueFrac));
-  dbuga("saturation="+saturationRgb(redFrac,greenFrac,blueFrac));
+  dbuga("saturationRgb="+saturationRgb(redFrac,greenFrac,blueFrac));
   if((window.innerWidth != vw)||(window.innerHeight != vh)){
     geometry();
     }
@@ -210,7 +246,7 @@ var colors=[
   {"name":"red", "r":1, "g":.3, "b":.5},
   {"name":"orange", "r":1, "g":.5, "b":.3},
   {"name":"yellow", "r":1, "g":.8, "b":.25},
-  {"name":"green", "r":.1, "g":1, "b":.75},
+  {"name":"green", "r":.3, "g":1, "b":.6},
   {"name":"blue", "r":.2, "g":.3, "b":1}
   ];
 function saturationRgb(r,g,b){
@@ -273,10 +309,6 @@ function drawGrid(ctx){
     ctx.moveTo(l,0);
     ctx.lineTo(l,vh);
     }
-  ctx.stroke();
-  ctx.strokeStyle="#fff";
-  ctx.beginPath();
-  ctx.arc(cx,cy,g/2,0,pi*2,true);
   ctx.stroke();
 
   }

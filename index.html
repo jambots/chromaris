@@ -244,13 +244,13 @@ function geometryTick(){
   animCtx.strokeStyle="white";
   animCtx.beginPath();
   animCtx.arc(cx,cy,retRad*2,0,pi*2,true);
-  animCtx.stroke;
+  animCtx.stroke();
   if(highestColorName !=""){
     animCtx.lineWidth=3;
     animCtx.strokeStyle=highestColorName;
     animCtx.beginPath();
     animCtx.arc(cx,cy,retRad*2,0,pi*2*highestFrac,true);
-    animCtx.stroke;
+    animCtx.stroke();
     }
 
 

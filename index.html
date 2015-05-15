@@ -233,10 +233,10 @@ var colors=[
   {"name":"green", "r":.3, "g":1, "b":.6},
   {"name":"blue", "r":.2, "g":.3, "b":1}
   ];
-function saturationRgb(r,g,b){
-  var deltaRG=Math.abs(r-g);
-  var deltaGB=Math.abs(g-b);
-  var deltaBR=Math.abs(b-r);
+function saturationRgb(rgb){
+  var deltaRG=Math.abs(rgb["r"]-rgb["g"]);
+  var deltaGB=Math.abs(rgb["g"]-rgb["b"]);
+  var deltaBR=Math.abs(rgb["b"]-rgb["r"]);
   var saturation=(deltaRG+deltaGB+deltaBR)/2;
   return saturation;
   }

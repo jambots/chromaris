@@ -180,13 +180,9 @@ function normalRgb(rgb){
   }
 var retRad=24;
 var sampleRad=8;
-function geometryTick(){
-  dbug('');
-  var samples=[{"x":0,"y":0}, {"x":retRad*2-1,"y":0}, {"x":retRad*2-1,"y":retRad*2-1}, {"x":0, "y":retRad*2-1}];
-  
-  animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
+function reticule(color){
   animCtx.lineWidth=2;
-  animCtx.strokeStyle="white";
+  animCtx.strokeStyle=color;
   animCtx.beginPath();
   animCtx.moveTo(cx-retRad, cy);     
   animCtx.lineTo(cx-retRad/3, cy);  
@@ -197,8 +193,14 @@ function geometryTick(){
   animCtx.moveTo(cx,cy+retRad);
   animCtx.lineTo(cx,cy+retRad/3);  
   animCtx.stroke(); 
+}
+function geometryTick(){
+  dbug('');
+  var samples=[{"x":0,"y":0}, {"x":retRad*2-1,"y":0}, {"x":retRad*2-1,"y":retRad*2-1}, {"x":0, "y":retRad*2-1}];
+  
+  animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
   for (var c=0; c<colorNames.length; c++){
-    lockByColorName[colorNames[c]]-=.1;
+    lockByColorName[colorNames[c]]-=.15;
     if(lockByColorName[colorNames[c]]<0){lockByColorName[colorNames[c]]=0;}
     }
   var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
@@ -240,7 +242,7 @@ function geometryTick(){
   dbuga("highestFrac="+ highestFrac);
   dbuga("highestColorName ="+ highestColorName);
 
-  animCtx.lineWidth=6;
+  animCtx.lineWidth=8;
   animCtx.strokeStyle="white";
   animCtx.beginPath();
   animCtx.arc(cx,cy,retRad*2,0,pi*2,true);
@@ -249,10 +251,15 @@ function geometryTick(){
     animCtx.lineWidth=3;
     animCtx.strokeStyle=highestColorName;
     animCtx.beginPath();
-    animCtx.arc(cx,cy,retRad*2,0,pi*2*highestFrac,true);
+    animCtx.arc(cx,cy,retRad*2,0,pi*2*highestFrac,false);
     animCtx.stroke();
     }
-
+  if(highestFrac==1){
+    reticule("white");
+    }
+  else{
+    reticule("black");
+    }
 
   //dbug("max="+max);
   //dbuga("redFrac="+Math.floor(redFrac*100)/100);

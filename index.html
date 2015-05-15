@@ -53,9 +53,9 @@ accelWatch = navigator.accelerometer.watchAcceleration(accelerometerSuccess, acc
   }
 var accelWatch;
 function accelerometerSuccess(e){
-  dbug("x:"+e.x);
-  dbuga("y:"+e.y);
-  dbuga("z:"+e.z);
+  //dbug("x:"+e.x);
+  //dbuga("y:"+e.y);
+  //dbuga("z:"+e.z);
 
   }
 function accelerometerError(e){
@@ -189,7 +189,8 @@ function geometryTick(){
   //dbuga("redFrac="+Math.floor(redFrac*100)/100);
   //dbuga("greenFrac="+Math.floor(greenFrac*100)/100);
   //dbuga("blueFrac="+Math.floor(blueFrac*100)/100);
-
+  dbug(colorNearestRgb(redFrac,greenFrac,blueFrac));
+  dbuga("saturation="+saturationRgb(redFrac,greenFrac,blueFrac));
   if((window.innerWidth != vw)||(window.innerHeight != vh)){
     geometry();
     }
@@ -204,6 +205,35 @@ var topPad=0;
 var cx=0; 
 var cy=0;
 var g=76.8;
+var colors=[
+  {"name":"red", "r":1, "g":.3, "b":.35},
+  {"name":"orange", "r":1, "g":.4, "b":.2},
+  {"name":"yellow", "r":1, "g":.8, "b":.25},
+  {"name":"green", "r":.1, "g":1, "b":.75},
+  {"name":"blue", "r":.2, "g":.3, "b":1}
+  ];
+function saturationRgb(r,g,b){
+  var deltaRG=Math.abs(r-g);
+  var deltaGB=Math.abs(g-b);
+  var deltaBR=Math.abs(b-r);
+  var saturation=(deltaRG+deltaGB+deltaBR)/2;
+  return saturation;
+  }
+function colorNearestRgb(r,g,b){
+  var nearestName="";
+  var nearestDist=10;
+  for (var c=0; c<colors.length; c++){
+    var dist=0;
+    dist+=Math.abs(r-colors[c].r);
+    dist+=Math.abs(g-colors[c].g);
+    dist+=Math.abs(b-colors[c].b);
+    if(dist<nearestDist){
+      nearestDist=dist;
+      nearestName=colors[c].name;
+      }
+    }
+  return nearestName;
+  }
 function geometry(){
   vw=window.innerWidth;
   vh=window.innerHeight;

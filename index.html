@@ -190,7 +190,7 @@ function geometryTick(){
     var offsetX=4*samples[s].x;
     var offsetY=samples[s].y*4*retRad*2;
     var offset=offsetX+offsetY;
-    var rgb={"r":myImageData[""+(offset)], "g":myImageData[""+(offset+1)], "b":myImageData[""+(offset+2)]};
+    var rgb={"r":myImageData.data[""+(offset)], "g":myImageData.data[""+(offset+1)], "b":myImageData.data[""+(offset+2)]};
     samples[s].rgb=rgb;
     samples[s].nRgb=normalRgb(rgb);
     dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));

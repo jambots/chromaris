@@ -178,8 +178,8 @@ function normalRgb(rgb){
   var blueFrac=rgb["b"]/max;
   return {"r":redFrac, "g":greenFrac, "b":blueFrac};
   }
-var retRad=40;
-var sampleRad=10;
+var retRad=24;
+var sampleRad=8;
 function geometryTick(){
   dbug('');
   var samples=[{"x":0,"y":0}, {"x":retRad*2-1,"y":0}, {"x":retRad*2-1,"y":retRad*2-1}, {"x":0, "y":retRad*2-1}];
@@ -188,7 +188,6 @@ function geometryTick(){
   animCtx.lineWidth=2;
   animCtx.strokeStyle="white";
   animCtx.beginPath();
-  animCtx.arc(cx,cy,retRad*1.7,0,pi*2,true);
   animCtx.moveTo(cx-retRad, cy);     
   animCtx.lineTo(cx-retRad/3, cy);  
   animCtx.moveTo(cx+retRad, cy);     
@@ -198,6 +197,10 @@ function geometryTick(){
   animCtx.moveTo(cx,cy+retRad);
   animCtx.lineTo(cx,cy+retRad/3);  
   animCtx.stroke(); 
+  for (var c=0; c<colorNames.length; c++){
+    lockByColorName[colorNames[c]]-=.1;
+    if(lockByColorName[colorNames[c]]<0){lockByColorName[colorNames[c]]=0;}
+    }
   var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
   for (var s=0; s<samples.length; s++){
     var offsetX=4*samples[s].x;
@@ -207,10 +210,16 @@ function geometryTick(){
     samples[s].rgb=rgb;
     samples[s].nRgb=normalRgb(rgb);
     dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
+
     animCtx.beginPath();
     animCtx.arc(cx+samples[s].x-retRad, cy+samples[s].y-retRad, sampleRad, 0, pi*2, true);
-    if(saturationRgb(samples[s].nRgb)>.5){
-      animCtx.fillStyle="rgb("+Math.floor(samples[s].nRgb["r"]*255)+", "+Math.floor(samples[s].nRgb["g"]*255)+", "+Math.floor(samples[s].nRgb["b"]*255)+")";
+    if(saturationRgb(samples[s].nRgb)>.45){
+      var colorName=colorNearestRgb(samples[s].nRgb);
+      var lockWas=lockByColorName[colorName];
+      lockByColorName[colorName]+=.05;
+      if(lockByColorName[colorName]>1){lockByColorName[colorName]=1;}
+      var rgb=rgbByColorName(colorName);
+      animCtx.fillStyle="rgb("+Math.floor(rgb["r"]*255)+", "+Math.floor(rgb["g"]*255)+", "+Math.floor(rgb["b"]*255)+")";
       animCtx.fill()
       animCtx.strokeStyle="white";
       animCtx.stroke();
@@ -220,6 +229,28 @@ function geometryTick(){
       animCtx.stroke();
       }
     }
+  var highestFrac=0;
+  var highestColorName="";
+  for (var c=0; c<colorNames.length; c++){
+    if(lockByColorName[colorNames[c]]>highestFrac){
+      highestFrac=lockByColorName[colorNames[c]];
+      highestColorName=colorNames[c];
+      }
+    }
+  animCtx.lineWidth=6;
+  animCtx.strokeStyle="white";
+  animCtx.beginPath();
+  animCtx.arc(cx,cy,retRad*2,0,pi*2,true);
+  animCtx.stroke;
+  if(highestColorName !=""){
+    animCtx.lineWidth=3;
+    animCtx.strokeStyle=highestColorName;
+    animCtx.beginPath();
+    animCtx.arc(cx,cy,retRad*2,0,pi*2*highestFrac,true);
+    animCtx.stroke;
+    }
+
+
   //dbug("max="+max);
   //dbuga("redFrac="+Math.floor(redFrac*100)/100);
   //dbuga("greenFrac="+Math.floor(greenFrac*100)/100);
@@ -247,6 +278,17 @@ var colors=[
   {"name":"green", "r":.3, "g":1, "b":.6},
   {"name":"blue", "r":.2, "g":.3, "b":1}
   ];
+var colorNames=["red","orange","yellow","green","blue"];
+function rgbByColorName(colorName){
+  var rgb={"r":0, "g":0, "b":0};
+  for (var c=0; c<colors.length; c++){
+    if(colors[c].name==colorName){
+      rgb={"r":colors[c].r, "g":colors[c].g, "b":colors[c].b};
+      }
+    }
+  return rgb;
+  }
+var lockByColorName={"red":0, "orange":0, "yellow":0, "green":0, "blue":0};
 function saturationRgb(rgb){
   var deltaRG=Math.abs(rgb["r"]-rgb["g"]);
   var deltaGB=Math.abs(rgb["g"]-rgb["b"]);
@@ -254,14 +296,14 @@ function saturationRgb(rgb){
   var saturation=(deltaRG+deltaGB+deltaBR)/2;
   return saturation;
   }
-function colorNearestRgb(r,g,b){
+function colorNearestRgb(rgb){
   var nearestName="";
   var nearestDist=10;
   for (var c=0; c<colors.length; c++){
     var dist=0;
-    dist+=Math.abs(r-colors[c].r);
-    dist+=Math.abs(g-colors[c].g);
-    dist+=Math.abs(b-colors[c].b);
+    dist+=Math.abs(rgb.r-colors[c].r);
+    dist+=Math.abs(rgb.g-colors[c].g);
+    dist+=Math.abs(rgb.b-colors[c].b);
     if(dist<nearestDist){
       nearestDist=dist;
       nearestName=colors[c].name;

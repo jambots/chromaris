@@ -178,7 +178,7 @@ function normalRgb(rgb){
   var redFrac=rgb["r"]/max;
   var greenFrac=rgb["g"]/max;
   var blueFrac=rgb["b"]/max;
-  return {"r":redFrac, "g":greenFrac, "b":blueFrac};
+  return {"r":redFrac, "g":greenFrac, "b":blueFrac, "max":max/255};
   }
 var retRad=24;
 var sampleRad=8;
@@ -241,7 +241,7 @@ function geometryTick(){
 
     animCtx.beginPath();
     animCtx.arc(cx+samples[s].x-retRad, cy+samples[s].y-retRad, sampleRad, 0, pi*2, true);
-    if(saturationRgb(samples[s].nRgb)>.6){
+    if((saturationRgb(samples[s].nRgb)>.6)&&(samples[s].nRgb.max>.5)){
       var colorName=colorNearestRgb(samples[s].nRgb);
       foundGlom+=colorName+"|";
       foundByColor[colorName]++;

@@ -171,6 +171,20 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
 function rnd(range){
   return Math.floor(Math.random()*range);
   }
+function peggedRgb(rgb){
+  var max=rgb["r"];
+  if(rgb["g"]>max){max=rgb["g"];}
+  if(rgb["b"]>max){max=rgb["b"];}
+
+  var min=rgb["r"];
+  if(rgb["g"]<min){min=rgb["g"];}
+  if(rgb["b"]<min){min=rgb["b"];}
+  var range=max-min;
+  var redFrac=(rgb["r"]-min)/range;
+  var greenFrac=(rgb["g"]-min)/range;
+  var blueFrac=(rgb["b"]-min)/range;
+  return {"r":redFrac, "g":greenFrac, "b":blueFrac};
+  }
 function normalRgb(rgb){
   var max=rgb["r"];
   if(rgb["g"]>max){max=rgb["g"];}
@@ -238,6 +252,7 @@ function geometryTick(){
     var rgb={"r":myImageData.data[""+(offset)]/255, "g":myImageData.data[""+(offset+1)]/255, "b":myImageData.data[""+(offset+2)]/255};
     samples[s].rgb=rgb;
     samples[s].nRgb=normalRgb(rgb);
+    samples[s].pRgb=peggedRgb(rgb);
     //dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
 
     animCtx.beginPath();
@@ -314,30 +329,49 @@ function geometryTick(){
   //dbuga("blueFrac="+Math.floor(blueFrac*100)/100);
   //dbug(colorNearestRgb(redFrac,greenFrac,blueFrac));
   //dbuga("saturationRgb="+saturationRgb(redFrac,greenFrac,blueFrac));
+  var rgb=samples[0].pRgb;
   animCtx.clearRect(0,vh-g,vw,g);
   animCtx.fillStyle="red";
-  animCtx.fillRect(0,vh-g,vw*samples[0].rgb.r, g*.25);
+  animCtx.fillRect(0,vh-g,vw*rgb.r, g*.25);
   animCtx.fillStyle="green";
-  animCtx.fillRect(0,vh-g*.75,vw*samples[0].rgb.g, g*.25);
+  animCtx.fillRect(0,vh-g*.75,vw*rgb.g, g*.25);
   animCtx.fillStyle="blue";
-  animCtx.fillRect(0,vh-g*.5,vw*samples[0].rgb.b, g*.25);
+  animCtx.fillRect(0,vh-g*.5,vw*rgb.b, g*.25);
   animCtx.fillStyle="#666";
   animCtx.fillRect(0,vh-g*.25,vw*samples[0].sat, g*.25);
   animCtx.fillStyle="white";
   animCtx.textAlign="left";
   animCtx.textBaseline="middle";
-  animCtx.font=g/4+"px Arial";
-  animCtx.fillText("r "+Math.floor(samples[0].rgb.r/100)*100, g/2,vh-g*7/8);
-  animCtx.fillText("g "+Math.floor(samples[0].rgb.g/100)*100, g/2,vh-g*5/8);
-  animCtx.fillText("b "+Math.floor(samples[0].rgb.b/100)*100, g/2,vh-g*3/8);
-  animCtx.fillText("s "+Math.floor(samples[0].sat/100)*100, g/2,vh-g*1/8);
+  animCtx.font=g/5+"px Arial";
+  animCtx.fillText("R "+Math.floor(samples[0].rgb.r*100)/100, g/4,vh-g*7/8);
+  animCtx.fillText("G "+Math.floor(samples[0].rgb.g*100)/100, g/4,vh-g*5/8);
+  animCtx.fillText("B "+Math.floor(samples[0].rgb.b*100)/100, g/4,vh-g*3/8);
+  animCtx.fillText("s "+Math.floor(samples[0].sat*100)/100, g/4,vh-g*1/8);
 
-
+  var wcx=g*2;
+  var wcy=vh-g*3;
+  animCtx.fillStyle="white";
+  animCtx.beginPath();
+  animCtx.arc(wcx,wcy,g*1,0,pi*2,true);
+  animCtx.fill();
+  for(var d=0; d<360; d+=30){
+    var x=wcx+Math.cos(pi*d/180)*g;
+    var y=wcy+Math.sin(pi*d/180)*g;
+    animCtx.fillStyle=colorByDegrees(d);
+    animCtx.beginPath();
+    animCtx.arc(x,y,g/4,0,pi*2,true);
+    animCtx.fill();
+    }
 
   if((window.innerWidth != vw)||(window.innerHeight != vh)){
     geometry();
     }
   }
+function colorByDegrees(deg){
+  var color="black";
+  
+  }
+
 var cw=0; 
 var ch=0;
 var cellsAcross=10;

@@ -196,10 +196,16 @@ function reticule(color){
   animCtx.lineTo(cx,cy+retRad/3);  
   animCtx.stroke(); 
 }
-
+function unblock(){
+  blocking=false;
+  }
+var blocking=false;
 function loadAndPlayAudio(url) {
   dbuga("loadAndPlayAudio("+url+")");
-/*
+  if(blocking==false){
+    window.clearTimeout(blockTimeout)
+    blockTimeout=window.setTimeout("unblock()", 2000);
+    blocking=true;
     // Play the audio file at url
     var my_media = new Media(url,
         // success callback
@@ -213,9 +219,9 @@ function loadAndPlayAudio(url) {
     );
     // Play audio
     my_media.play();
-*/
+  }
 }
-
+var blockTimeout;
 function geometryTick(){
   //dbug('');
   var samples=[{"x":0,"y":0}, {"x":retRad*2-1,"y":0}, {"x":retRad*2-1,"y":retRad*2-1}, {"x":0, "y":retRad*2-1}];

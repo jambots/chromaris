@@ -278,7 +278,10 @@ function geometryTick(){
   animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
   var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
   var foundGlom="|";
-  var foundByColor={"red":0, "orange":0, "yellow":0, "green":0, "blue":0};
+  var foundByHue={};
+  for (var h=0; h<hues.length;h++){
+    foundByHue[hues[h].name]=0;
+    }
   for (var s=0; s<samples.length; s++){
     var offsetX=4*samples[s].x;
     var offsetY=samples[s].y*4*retRad*2;
@@ -287,6 +290,8 @@ function geometryTick(){
     samples[s].rgb=rgb;
     samples[s].nRgb=normalRgb(rgb);
     samples[s].pRgb=peggedRgb(rgb);
+    samples[s].deg=degFromPegged(samples[s].pRgb);
+
     //dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
 
     animCtx.lineWidth=2;
@@ -295,14 +300,14 @@ function geometryTick(){
     samples[s].sat=sat;
     animCtx.arc(cx+samples[s].x-retRad, cy+samples[s].y-retRad, sampleRad, 0, pi*2, true);
     if((samples[s].sat>.6)&&(samples[s].nRgb.max>.3)){
-      var colorName=colorNearestRgb(samples[s].nRgb);
-      foundGlom+=colorName+"|";
-      foundByColor[colorName]++;
-      var lockWas=lockByColorName[colorName];
-      lockByColorName[colorName]+=.05;
-      if(lockByColorName[colorName]>1){lockByColorName[colorName]=1;}
-      if((lockByColorName[colorName]==1)&&(lockWas != 1)){loadAndPlayAudio("cockpitmp3/"+colorName+".mp3");}
-      var rgb=rgbByColorName(colorName);
+      var hueName=hueNearestDeg(samples[s].deg);
+      foundGlom+=hueName+"|";
+      foundByHue[hueName]++;
+      var lockWas=lockByHueName[hueName];
+      lockByHueName[hueName]+=.05;
+      if(lockByHueName[hueName]>1){lockByHueName[hueName]=1;}
+      if((lockByHueName[hueName]==1)&&(lockWas != 1)){loadAndPlayAudio("cockpitmp3/"+hueName+"a.mp3");}
+      var rgb=rgbByHueName(hueName);
       animCtx.fillStyle="rgb("+Math.floor(rgb["r"]*255)+", "+Math.floor(rgb["g"]*255)+", "+Math.floor(rgb["b"]*255)+")";
       animCtx.fill()
       animCtx.strokeStyle="white";
@@ -314,19 +319,20 @@ function geometryTick(){
       }
     }
   //fade the not found colors lock - prevents jitter at 1
-  for (var c=0; c<colorNames.length; c++){
-    if(foundByColor[colorNames[c]]<3){
-      lockByColorName[colorNames[c]]-=.15;
-      if(lockByColorName[colorNames[c]]<0){lockByColorName[colorNames[c]]=0;}
+  for (var h=0; h<hueNames.length; h++){
+    if(foundByHue[hueNames[h]]<3){
+      lockByHueName[hueNames[h]]-=.15;
+      if(lockByHueName[hueNames[h]]<0){lockByHueName[hueNames[h]]=0;}
       }
     }
 
   var highestFrac=0;
-  var highestColorName="";
-  for (var c=0; c<colorNames.length; c++){
-    if(lockByColorName[colorNames[c]]>highestFrac){
-      highestFrac=lockByColorName[colorNames[c]];
-      highestColorName=colorNames[c];
+  var highestHueName="";
+  
+  for (var h=0; h<hueNames.length; h++){
+    if(lockByHueName[hueNames[h]]>highestFrac){
+      highestFrac=lockByHueName[hueNames[h]];
+      highestHueName=hueNames[h];
       }
     }
   //dbuga("highestFrac="+ highestFrac);
@@ -338,9 +344,9 @@ function geometryTick(){
   animCtx.arc(cx,cy,retRad*3,0,pi*2,true);
   animCtx.stroke();
 
-  if(highestColorName !=""){
+  if(highestHueName !=""){
     animCtx.lineWidth=4;
-    animCtx.strokeStyle=highestColorName;
+    animCtx.strokeStyle=colorOfHueName(highestHueName);
     animCtx.beginPath();
     animCtx.arc(cx,cy,retRad*3,0,pi*2*highestFrac,false);
     animCtx.stroke();
@@ -403,9 +409,19 @@ function geometryTick(){
       }
     animCtx.fill();
     }
+  //plot hues
+  animCtx.lineWidth=g/10;
+  for(var h=0; h<hues.length; h++){
+    
+    animCtx.strokeStyle=colorByDegrees(hues[h].deg);
+    animCtx.beginPath();
+    animCtx.moveTo(wcx+g*Math.cos(pi*hues[h].deg/180)/3,wcy+g*Math.sin(pi*hues[h].deg/180)/3);
+    animCtx.lineTo(wcx+g*Math.cos(pi*hues[h].deg/180)/1.5,wcy+g*Math.sin(pi*hues[h].deg/180)/1.5);
+    animCtx.stroke();
+    }
   var testDeg=degFromPegged(samples[0].pRgb);
+  testDeg=90;
   if(testDeg>-1){
-    animCtx.lineWidth=g/10;
     animCtx.strokeStyle="black";//colorFromRgb(samples[0].pRgb);
     animCtx.beginPath();
     animCtx.moveTo(wcx+g*Math.cos(pi*testDeg/180)/3,wcy+g*Math.sin(pi*testDeg/180)/3);
@@ -457,8 +473,25 @@ var colors=[
   {"name":"green", "r":.3, "g":1, "b":.6},
   {"name":"blue", "r":.2, "g":.3, "b":1}
   ];
-var colorNames=["red","orange","yellow","green","blue"];
-function rgbByColorName(colorName){
+var hues=[
+  {"name":"pink", "deg":336},
+  {"name":"red", "deg":347},
+  {"name":"orange", "deg":13},
+  {"name":"gold", "deg":41},
+  {"name":"yellow", "deg":48},
+  {"name":"lime", "deg":87},
+  {"name":"forest", "deg":140},
+  {"name":"teal", "deg":216},
+  {"name":"navy", "deg":230},
+  {"name":"purple", "deg":280}
+  ];
+var lockByHueName={};
+var hueNames=[];
+  for (var h=0; h<hues.length;h++){
+    lockByHueName[hues[h].name]=0;
+    hueNames.push(hues[h].name);
+    }
+function rgbByHueName(hueName){
   var rgb={"r":0, "g":0, "b":0};
   for (var c=0; c<colors.length; c++){
     if(colors[c].name==colorName){
@@ -467,13 +500,26 @@ function rgbByColorName(colorName){
     }
   return rgb;
   }
-var lockByColorName={"red":0, "orange":0, "yellow":0, "green":0, "blue":0};
 function saturationRgb(rgb){
   var deltaRG=Math.abs(rgb["r"]-rgb["g"]);
   var deltaGB=Math.abs(rgb["g"]-rgb["b"]);
   var deltaBR=Math.abs(rgb["b"]-rgb["r"]);
   var saturation=(deltaRG+deltaGB+deltaBR)/2;
   return saturation;
+  }
+function hueNearestDeg(deg){
+  var nearestName="";
+  var nearestDist=1000;
+  for (var h=0; h<hues.length; h++){
+    var dist=0;
+    dist=Math.abs(deg-hues[h].deg);
+    if(dist>180){dist=360-dist;}//270 becomes 90
+    if(dist<nearestDist){
+      nearestDist=dist;
+      nearestName=hues[h].name;
+      }
+    }
+  return nearestName;
   }
 function colorNearestRgb(rgb){
   var nearestName="";

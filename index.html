@@ -223,6 +223,7 @@ function geometryTick(){
   animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
   var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
   var foundGlom="|";
+  var foundByColor={"red":0, "orange":0, "yellow":0, "green":0, "blue":0};
   for (var s=0; s<samples.length; s++){
     var offsetX=4*samples[s].x;
     var offsetY=samples[s].y*4*retRad*2;
@@ -234,9 +235,10 @@ function geometryTick(){
 
     animCtx.beginPath();
     animCtx.arc(cx+samples[s].x-retRad, cy+samples[s].y-retRad, sampleRad, 0, pi*2, true);
-    if(saturationRgb(samples[s].nRgb)>.5){
+    if(saturationRgb(samples[s].nRgb)>.6){
       var colorName=colorNearestRgb(samples[s].nRgb);
-      foundGlom+=colorName+"|"
+      foundGlom+=colorName+"|";
+      foundByColor[colorName]++;
       var lockWas=lockByColorName[colorName];
       lockByColorName[colorName]+=.05;
       if(lockByColorName[colorName]>1){lockByColorName[colorName]=1;}
@@ -254,7 +256,7 @@ function geometryTick(){
     }
   //fade the not found colors lock - prevents jitter at 1
   for (var c=0; c<colorNames.length; c++){
-    if(foundGlom.indexOf(colorNames[c])==-1){
+    if(foundByColor[colorNames[c]]<3){
       lockByColorName[colorNames[c]]-=.15;
       if(lockByColorName[colorNames[c]]<0){lockByColorName[colorNames[c]]=0;}
       }

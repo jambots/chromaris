@@ -329,7 +329,7 @@ function geometryTick(){
   //dbuga("blueFrac="+Math.floor(blueFrac*100)/100);
   //dbug(colorNearestRgb(redFrac,greenFrac,blueFrac));
   //dbuga("saturationRgb="+saturationRgb(redFrac,greenFrac,blueFrac));
-  var rgb=samples[0].pRgb;
+  var rgb=samples[0].rgb;
   animCtx.clearRect(0,vh-g,vw,g);
   animCtx.fillStyle="red";
   animCtx.fillRect(0,vh-g,vw*rgb.r, g*.25);
@@ -343,16 +343,16 @@ function geometryTick(){
   animCtx.textAlign="left";
   animCtx.textBaseline="middle";
   animCtx.font=g/5+"px Arial";
-  animCtx.fillText("R "+Math.floor(samples[0].rgb.r*100)/100, g/4,vh-g*7/8);
-  animCtx.fillText("G "+Math.floor(samples[0].rgb.g*100)/100, g/4,vh-g*5/8);
-  animCtx.fillText("B "+Math.floor(samples[0].rgb.b*100)/100, g/4,vh-g*3/8);
+  animCtx.fillText("R "+Math.floor(rgb.r*100)/100, g/4,vh-g*7/8);
+  animCtx.fillText("G "+Math.floor(rgb.g*100)/100, g/4,vh-g*5/8);
+  animCtx.fillText("B "+Math.floor(rgb.b*100)/100, g/4,vh-g*3/8);
   animCtx.fillText("s "+Math.floor(samples[0].sat*100)/100, g/4,vh-g*1/8);
 
-  var wcx=g*2;
-  var wcy=vh-g*3;
+  var wcx=g*1.5;
+  var wcy=vh-g*2.5;
   animCtx.fillStyle="white";
   animCtx.beginPath();
-  animCtx.arc(wcx,wcy,g*1,0,pi*2,true);
+  animCtx.arc(wcx,wcy,g*1.25,0,pi*2,true);
   animCtx.fill();
   for(var d=0; d<360; d+=30){
     var x=wcx+Math.cos(pi*d/180)*g;
@@ -367,9 +367,21 @@ function geometryTick(){
     geometry();
     }
   }
+function clipSaw(deg){
+  var degFrac=deg/360; //0 1
+  var degScaled=degFrac*6; //0 6
+  var degMirror=Math.abs(degScaled-3); //3 0 3
+  var degOffset=degMirror-1; //2 -1 2
+  if(degOffset>1){degOffset=1;}
+  if(degOffset<0){degOffset=0;}
+  return degOffset;
+  }
 function colorByDegrees(deg){
-  var color="black";
-  
+  var red=Math.floor(clipSaw((deg)%360)*255);
+  var blue=Math.floor(clipSaw((deg+120)%360)*255);
+  var green=Math.floor(clipSaw((deg+240)%360)*255);
+  color="rgb("+red+","+green+","+blue+")";
+  return color;
   }
 
 var cw=0; 

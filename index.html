@@ -403,14 +403,20 @@ function geometryTick(){
     animCtx.fill();
     }
   var testDeg=degFromPegged(samples[0].pRgb);
-  //var testDeg=100;
+  var testDeg=100;
   if(testDeg>-1){
     animCtx.lineWidth=g/10;
     animCtx.strokeStyle="black";//colorFromRgb(samples[0].pRgb);
     animCtx.beginPath();
-    animCtx.moveTo(wcx,wcy);
+    animCtx.moveTo(wcx+g*Math.cos(pi*testDeg/180)/3,wcy+g*Math.sin(pi*testDeg/180)/3);
     animCtx.lineTo(wcx+g*Math.cos(pi*testDeg/180),wcy+g*Math.sin(pi*testDeg/180));
     animCtx.stroke();
+    animCtx.fillStyle="black";//colorFromRgb(samples[0].pRgb);
+    animCtx.textAlign="center";
+    animCtx.font=g/2+"px Arial";
+    
+    animCtx.fillText(Math.floor(testDeg),wcx,wcy);
+    
     }
   if((window.innerWidth != vw)||(window.innerHeight != vh)){
     geometry();

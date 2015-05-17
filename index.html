@@ -179,7 +179,7 @@ function normalRgb(rgb){
   var redFrac=rgb["r"]/max;
   var greenFrac=rgb["g"]/max;
   var blueFrac=rgb["b"]/max;
-  return {"r":redFrac, "g":greenFrac, "b":blueFrac, "max":max/255};
+  return {"r":redFrac, "g":greenFrac, "b":blueFrac, "max":max};
   }
 var retRad=24;
 var sampleRad=8;
@@ -202,7 +202,7 @@ function unblock(){
   }
 var blocking=false;
 function loadAndPlayAudio(url) {
-  dbuga("loadAndPlayAudio("+url+")");
+  //dbuga("loadAndPlayAudio("+url+")");
   if(blocking==false){
     window.clearTimeout(blockTimeout)
     blockTimeout=window.setTimeout("unblock()", 2000);
@@ -235,7 +235,7 @@ function geometryTick(){
     var offsetX=4*samples[s].x;
     var offsetY=samples[s].y*4*retRad*2;
     var offset=offsetX+offsetY;
-    var rgb={"r":myImageData.data[""+(offset)], "g":myImageData.data[""+(offset+1)], "b":myImageData.data[""+(offset+2)]};
+    var rgb={"r":myImageData.data[""+(offset)]/255, "g":myImageData.data[""+(offset+1)]/255, "b":myImageData.data[""+(offset+2)]/255};
     samples[s].rgb=rgb;
     samples[s].nRgb=normalRgb(rgb);
     //dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
@@ -316,21 +316,21 @@ function geometryTick(){
   //dbuga("saturationRgb="+saturationRgb(redFrac,greenFrac,blueFrac));
   animCtx.clearRect(0,vh-g,vw,g);
   animCtx.fillStyle="red";
-  animCtx.fillRect(0,vh-g,vw*samples[0].rgb.r/255, g*.25);
+  animCtx.fillRect(0,vh-g,vw*samples[0].rgb.r, g*.25);
   animCtx.fillStyle="green";
-  animCtx.fillRect(0,vh-g*.75,vw*samples[0].rgb.g/255, g*.25);
+  animCtx.fillRect(0,vh-g*.75,vw*samples[0].rgb.g, g*.25);
   animCtx.fillStyle="blue";
-  animCtx.fillRect(0,vh-g*.5,vw*samples[0].rgb.b/255, g*.25);
+  animCtx.fillRect(0,vh-g*.5,vw*samples[0].rgb.b, g*.25);
   animCtx.fillStyle="#666";
   animCtx.fillRect(0,vh-g*.25,vw*samples[0].sat, g*.25);
   animCtx.fillStyle="white";
   animCtx.textAlign="left";
   animCtx.textBaseline="middle";
   animCtx.font=g/4+"px Arial";
-  animCtx.fillText("r "+samples[0].rgb.r, g/2,vh-g*7/8);
-  animCtx.fillText("g "+samples[0].rgb.g, g/2,vh-g*5/8);
-  animCtx.fillText("b "+samples[0].rgb.b, g/2,vh-g*3/8);
-  animCtx.fillText("s "+(samples[0].sat/100)*100, g/2,vh-g*1/8);
+  animCtx.fillText("r "+Math.floor(samples[0].rgb.r/100)*100, g/2,vh-g*7/8);
+  animCtx.fillText("g "+Math.floor(samples[0].rgb.g/100)*100, g/2,vh-g*5/8);
+  animCtx.fillText("b "+Math.floor(samples[0].rgb.b/100)*100, g/2,vh-g*3/8);
+  animCtx.fillText("s "+Math.floor(samples[0].sat/100)*100, g/2,vh-g*1/8);
 
 
 

@@ -236,6 +236,40 @@ function loadAndPlayAudio(url) {
     my_media.play();
   }
 }
+function degFromPegged(rgb){
+  var deg=-1;
+  if((rgb.r>0)&&(rgb.r<1)){// red range
+    if((rgb.g==0)&&(rgb.b==1)){ // blue to purple
+      deg=240+60*rgb.r;
+      }
+    else{ //yellow to green
+      deg=120-rgb.r*60;
+      }
+    }
+  if((rgb.g>0)&&(rgb.g<1)){// green range
+    if((rgb.r==1)&&(rgb.b==0)){ // red to yellow
+      deg=60*rgb.g;
+      }
+    else{ //teal to blue
+      deg=240-rgb.g*60;
+      }
+    }
+  if((rgb.g>0)&&(rgb.g<1)){// blue range
+    if((rgb.r==0)&&(rgb.g==1)){ // green to teal
+      deg=120*rgb.b;
+      }
+    else{ //purple to red
+      deg=360-rgb.b*60;
+      }
+    }
+  if((rgb.r==1)&&(rgb.g==0)&&(rgb.b==0)){deg=0;}
+  if((rgb.r==1)&&(rgb.g==1)&&(rgb.b==0)){deg=60;}
+  if((rgb.r==0)&&(rgb.g==1)&&(rgb.b==0)){deg=120;}
+  if((rgb.r==0)&&(rgb.g==1)&&(rgb.b==1)){deg=180;}
+  if((rgb.r==0)&&(rgb.g==0)&&(rgb.b==1)){deg=240;}
+  if((rgb.r==1)&&(rgb.g==0)&&(rgb.b==1)){deg=300;}
+  return deg;
+  }
 var blockTimeout;
 function geometryTick(){
   //dbug('');
@@ -348,6 +382,7 @@ function geometryTick(){
   animCtx.fillText("B "+Math.floor(rgb.b*100)/100, g/4,vh-g*3/8);
   animCtx.fillText("s "+Math.floor(samples[0].sat*100)/100, g/4,vh-g*1/8);
 
+  // color wheel
   var wcx=g*1.5;
   var wcy=vh-g*2.5;
   animCtx.fillStyle="white";
@@ -359,13 +394,28 @@ function geometryTick(){
     var y=wcy+Math.sin(pi*d/180)*g;
     animCtx.fillStyle=colorByDegrees(d);
     animCtx.beginPath();
-    animCtx.arc(x,y,g/4,0,pi*2,true);
+    if(d%60==0){
+      animCtx.arc(x,y,g/4,0,pi*2,true);
+      }
+    else{
+      animCtx.arc(x,y,g/5,0,pi*2,true);
+      }
     animCtx.fill();
     }
-
+  var testDeg=degFromPegged(samples[0].pRgb);
+  //var testDeg=100;
+  if(testDeg>-1){
+    animCtx.lineWidth=g/10;
+    animCtx.strokeStyle="black";//colorFromRgb(samples[0].pRgb);
+    animCtx.beginPath();
+    animCtx.moveTo(wcx,wcy);
+    animCtx.lineTo(wcx+g*Math.cos(pi*testDeg/180),wcy+g*Math.sin(pi*testDeg/180));
+    animCtx.stroke();
+    }
   if((window.innerWidth != vw)||(window.innerHeight != vh)){
     geometry();
     }
+  dbug(testDeg);
   }
 function clipSaw(deg){
   var degFrac=deg/360; //0 1

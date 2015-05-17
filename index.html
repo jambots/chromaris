@@ -254,7 +254,7 @@ function degFromPegged(rgb){
       deg=240-rgb.g*60;
       }
     }
-  if((rgb.g>0)&&(rgb.g<1)){// blue range
+  if((rgb.b>0)&&(rgb.b<1)){// blue range
     if((rgb.r==0)&&(rgb.g==1)){ // green to teal
       deg=120*rgb.b;
       }
@@ -289,6 +289,7 @@ function geometryTick(){
     samples[s].pRgb=peggedRgb(rgb);
     //dbuga(offset+" "+JSON.stringify(samples[s].rgb)+" "+JSON.stringify(samples[s].nRgb));
 
+    animCtx.lineWidth=2;
     animCtx.beginPath();
     var sat=saturationRgb(samples[s].nRgb);
     samples[s].sat=sat;
@@ -420,7 +421,7 @@ function geometryTick(){
   if((window.innerWidth != vw)||(window.innerHeight != vh)){
     geometry();
     }
-  dbug(testDeg);
+  //dbug(testDeg);
   }
 function clipSaw(deg){
   var degFrac=deg/360; //0 1

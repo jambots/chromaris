@@ -256,7 +256,7 @@ function degFromPegged(rgb){
     }
   if((rgb.b>0)&&(rgb.b<1)){// blue range
     if((rgb.r==0)&&(rgb.g==1)){ // green to teal
-      deg=120*rgb.b;
+      deg=120+60*rgb.b;
       }
     else{ //purple to red
       deg=360-rgb.b*60;

@@ -196,8 +196,10 @@ function reticule(color){
   animCtx.lineTo(cx,cy+retRad/3);  
   animCtx.stroke(); 
 }
+
 function loadAndPlayAudio(url) {
   dbuga("loadAndPlayAudio("+url+")");
+/*
     // Play the audio file at url
     var my_media = new Media(url,
         // success callback
@@ -211,6 +213,7 @@ function loadAndPlayAudio(url) {
     );
     // Play audio
     my_media.play();
+*/
 }
 
 function geometryTick(){
@@ -218,11 +221,8 @@ function geometryTick(){
   var samples=[{"x":0,"y":0}, {"x":retRad*2-1,"y":0}, {"x":retRad*2-1,"y":retRad*2-1}, {"x":0, "y":retRad*2-1}];
   
   animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
-  for (var c=0; c<colorNames.length; c++){
-    lockByColorName[colorNames[c]]-=.15;
-    if(lockByColorName[colorNames[c]]<0){lockByColorName[colorNames[c]]=0;}
-    }
   var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
+  var foundGlom="|";
   for (var s=0; s<samples.length; s++){
     var offsetX=4*samples[s].x;
     var offsetY=samples[s].y*4*retRad*2;
@@ -234,8 +234,9 @@ function geometryTick(){
 
     animCtx.beginPath();
     animCtx.arc(cx+samples[s].x-retRad, cy+samples[s].y-retRad, sampleRad, 0, pi*2, true);
-    if(saturationRgb(samples[s].nRgb)>.35){
+    if(saturationRgb(samples[s].nRgb)>.5){
       var colorName=colorNearestRgb(samples[s].nRgb);
+      foundGlom+=colorName+"|"
       var lockWas=lockByColorName[colorName];
       lockByColorName[colorName]+=.05;
       if(lockByColorName[colorName]>1){lockByColorName[colorName]=1;}
@@ -251,6 +252,14 @@ function geometryTick(){
       animCtx.stroke();
       }
     }
+  //fade the not found colors lock - prevents jitter at 1
+  for (var c=0; c<colorNames.length; c++){
+    if(foundGlom.indexOf(colorNames[c])==-1){
+      lockByColorName[colorNames[c]]-=.15;
+      if(lockByColorName[colorNames[c]]<0){lockByColorName[colorNames[c]]=0;}
+      }
+    }
+
   var highestFrac=0;
   var highestColorName="";
   for (var c=0; c<colorNames.length; c++){

@@ -55,6 +55,7 @@ var accelWatch;
 var prevAccelX;
 var prevAccelY;
 var tipTimeout;
+var tipping=false;
 function resetTip(){
   window.clearTimeout(tipTimeout);
   tipping=false;
@@ -66,9 +67,9 @@ function tipSound(mp3File){
   loadAndPlayAudio(mp3File);
   }
 function accelerometerSuccess(e){
-  //dbug("x:"+e.x);
-  //dbuga("y:"+e.y);
-  //dbuga("z:"+e.z);
+  dbug("x:"+e.x);
+  dbuga("y:"+e.y);
+  dbuga("z:"+e.z);
   if(tipping==false){
     if((prevAccelX<0)&&(e.x>0)){tipSound("cockpitmp3/left.mp3");}
     if((prevAccelX>0)&&(e.x<0)){tipSound("cockpitmp3/right.mp3");}
@@ -306,7 +307,7 @@ function geometryTick(){
   //dbug('');
   var samples=[{"x":retRad,"y":retRad}, {"x":0,"y":0}, {"x":retRad*2-1,"y":0}, {"x":retRad*2-1,"y":retRad*2-1}, {"x":0, "y":retRad*2-1}];
   
-  animCtx.clearRect(cx-retRad-sampleRad, cy-retRad-sampleRad, (retRad+sampleRad)*2, (retRad+sampleRad)*2);
+  animCtx.clearRect(cx-retRad*2, cy-retRad*2, retRad*4, retRad*4);
   var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
   var foundGlom="|";
   var foundByHue={};

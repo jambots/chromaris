@@ -299,7 +299,7 @@ function geometryTick(){
     var sat=saturationRgb(samples[s].nRgb);
     samples[s].sat=sat;
     animCtx.arc(cx+samples[s].x-retRad, cy+samples[s].y-retRad, sampleRad, 0, pi*2, true);
-    if((samples[s].sat>.6)&&(samples[s].nRgb.max>.3)){
+    if((samples[s].sat>.5)&&(samples[s].nRgb.max>.2)){
       var hueName=hueNearestDeg(samples[s].deg);
       foundGlom+=hueName+"|";
       foundByHue[hueName]++;
@@ -307,8 +307,8 @@ function geometryTick(){
       lockByHueName[hueName]+=.05;
       if(lockByHueName[hueName]>1){lockByHueName[hueName]=1;}
       if((lockByHueName[hueName]==1)&&(lockWas != 1)){loadAndPlayAudio("cockpitmp3/"+hueName+"a.mp3");}
-      var rgb=rgbByHueName(hueName);
-      animCtx.fillStyle="rgb("+Math.floor(rgb["r"]*255)+", "+Math.floor(rgb["g"]*255)+", "+Math.floor(rgb["b"]*255)+")";
+      
+      animCtx.fillStyle=colorOfHueName(hueName);
       animCtx.fill()
       animCtx.strokeStyle="white";
       animCtx.stroke();

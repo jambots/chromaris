@@ -78,15 +78,25 @@ function resumeInit(){
   }
 function touchStart(e){
   e.preventDefault();
-  if(front==false){
-    front=true;
-    window.plugin.CanvasCamera.setCameraPosition(CanvasCamera.CameraPosition.FRONT);
-    bgCanv.style.webkitTransform="scale(-1, 1)";
+  if((e.touches[0].pageX>wh-g*2.5-g/4)&&(touches[0].pageY<g)){
+    if(front==false){
+      front=true;
+      window.plugin.CanvasCamera.setCameraPosition(CanvasCamera.CameraPosition.FRONT);
+      bgCanv.style.webkitTransform="scale(-1, 1)";
+      }
+    else{
+      front=false;
+      window.plugin.CanvasCamera.setCameraPosition(CanvasCamera.CameraPosition.BACK);
+      bgCanv.style.webkitTransform="scale(1, 1)";
+      }
     }
-  else{
-    front=false;
-    window.plugin.CanvasCamera.setCameraPosition(CanvasCamera.CameraPosition.BACK);
-    bgCanv.style.webkitTransform="scale(1, 1)";
+  if((e.touches[0].pageX<g*2.5+g/4)&&(touches[0].pageY<g)){
+    if(lighting=="incandescent"){
+      lighting="natural";
+      }
+    else{
+      lighting="incandescent";
+      }
     }
   }
 function touchMove(e){
@@ -279,8 +289,8 @@ function geometryTick(){
   var myImageData = bgCtx.getImageData(cx-retRad, cy-retRad, retRad*2, retRad*2);
   var foundGlom="|";
   var foundByHue={};
-  for (var h=0; h<hues.length;h++){
-    foundByHue[hues[h].name]=0;
+  for (var h=0; h<hues[lighting].length;h++){
+    foundByHue[hues[lighting][h].name]=0;
     }
   for (var s=0; s<samples.length; s++){
     var offsetX=4*samples[s].x;
@@ -411,12 +421,12 @@ function geometryTick(){
     }
   //plot hues
   animCtx.lineWidth=g/10;
-  for(var h=0; h<hues.length; h++){
+  for(var h=0; h<hues[lighting].length; h++){
     
-    animCtx.strokeStyle=colorOfDegrees(hues[h].deg);
+    animCtx.strokeStyle=colorOfDegrees(hues[lighting][h].deg);
     animCtx.beginPath();
-    animCtx.moveTo(wcx+g*Math.cos(pi*hues[h].deg/180)/3,wcy+g*Math.sin(pi*hues[h].deg/180)/3);
-    animCtx.lineTo(wcx+g*Math.cos(pi*hues[h].deg/180)/1.5,wcy+g*Math.sin(pi*hues[h].deg/180)/1.5);
+    animCtx.moveTo(wcx+g*Math.cos(pi*hues[lighting][h].deg/180)/3,wcy+g*Math.sin(pi*hues[lighting][h].deg/180)/3);
+    animCtx.lineTo(wcx+g*Math.cos(pi*hues[lighting][h].deg/180)/1.5,wcy+g*Math.sin(pi*hues[lighting][h].deg/180)/1.5);
     animCtx.stroke();
     }
   var testDeg=degFromPegged(samples[0].pRgb);
@@ -438,6 +448,24 @@ function geometryTick(){
     geometry();
     }
   //dbug(testDeg);
+
+  animCtx.strokeStyle="white";
+  animCtx.fillStyle="black";
+  roundRect(animCtx, g/4, g/4, g*2.5, g/2, g/8, true, true);
+  animCtx.fillStyle="white";//colorFromRgb(samples[0].pRgb);
+  animCtx.textAlign="center";
+  animCtx.font=g/3+"px Arial";  
+  animCtx.fillText(lighting,g*1.5,g/2);
+    
+  animCtx.strokeStyle="white";
+  animCtx.fillStyle="black";
+  roundRect(animCtx, vw-g/4-g*2.5, g/4, g*2.5, g/2, g/8, true,true);
+  animCtx.fillStyle="white";//colorFromRgb(samples[0].pRgb);
+  animCtx.textAlign="center";
+  animCtx.font=g/3+"px Arial";
+  if(front){animCtx.fillText("guns",vw-g*1.5,g/2);}
+  else{animCtx.fillText("bombs",vw-g*1.5,g/2);}
+    
   }
 function clipSaw(deg){
   var degFrac=deg/360; //0 1
@@ -480,23 +508,36 @@ var colors=[
   {"name":"green", "r":.3, "g":1, "b":.6},
   {"name":"blue", "r":.2, "g":.3, "b":1}
   ];
-var hues=[
-  {"name":"pink", "deg":336},
-  {"name":"red", "deg":347},
-  {"name":"orange", "deg":16},
-  {"name":"gold", "deg":36},
-  {"name":"yellow", "deg":44},
-  {"name":"lime", "deg":67},
-  {"name":"forest", "deg":115},
-  {"name":"teal", "deg":216},
-  {"name":"navy", "deg":237},
-  {"name":"purple", "deg":315}
-  ];
+var lighting="incandescent";
+var hues={"incandescent":[
+  {"name":"pink", "deg":340},
+  {"name":"red", "deg":350},
+  {"name":"orange", "deg":15},
+  {"name":"gold", "deg":35},
+  {"name":"yellow", "deg":45},
+  {"name":"lime", "deg":70},
+  {"name":"forest", "deg":130},
+  {"name":"teal", "deg":215},
+  {"name":"navy", "deg":230},
+  {"name":"purple", "deg":325}
+  ], 
+  "natural":[
+  {"name":"pink", "deg":333},
+  {"name":"red", "deg":344},
+  {"name":"orange", "deg":14},
+  {"name":"gold", "deg":41},
+  {"name":"yellow", "deg":52},
+  {"name":"lime", "deg":92},
+  {"name":"forest", "deg":155},
+  {"name":"teal", "deg":210},
+  {"name":"navy", "deg":225},
+  {"name":"purple", "deg":271}
+  ]};
 var lockByHueName={};
 var hueNames=[];
-  for (var h=0; h<hues.length;h++){
-    lockByHueName[hues[h].name]=0;
-    hueNames.push(hues[h].name);
+  for (var h=0; h<hues[lighting].length;h++){
+    lockByHueName[hues[lighting][h].name]=0;
+    hueNames.push(hues[lighting][h].name);
     }
 function colorOfHueName(hueName){
   var rgb=rgbOfHueName(hueName);
@@ -504,9 +545,9 @@ function colorOfHueName(hueName){
   }
 function rgbOfHueName(hueName){
   var rgb={"r":0, "g":0, "b":0};
-  for (var h=0; h<hues.length; h++){
-    if(hues[h].name==hueName){
-      var deg=hues[h].deg;
+  for (var h=0; h<hues[lighting].length; h++){
+    if(hues[lighting][h].name==hueName){
+      var deg=hues[lighting][h].deg;
       rgb=rgbOfDegrees(deg);
       }
     }
@@ -522,13 +563,13 @@ function saturationRgb(rgb){
 function hueNearestDeg(deg){
   var nearestName="";
   var nearestDist=1000;
-  for (var h=0; h<hues.length; h++){
+  for (var h=0; h<hues[lighting].length; h++){
     var dist=0;
-    dist=Math.abs(deg-hues[h].deg);
+    dist=Math.abs(deg-hues[lighting][h].deg);
     if(dist>180){dist=360-dist;}//270 becomes 90
     if(dist<nearestDist){
       nearestDist=dist;
-      nearestName=hues[h].name;
+      nearestName=hues[lighting][h].name;
       }
     }
   return nearestName;

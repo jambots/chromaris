@@ -52,10 +52,30 @@ accelWatch = navigator.accelerometer.watchAcceleration(accelerometerSuccess, acc
     }, false);
   }
 var accelWatch;
+var prevAccelX;
+var prevAccelY;
+var tipTimeout;
+function resetTip(){
+  window.clearTimeout(tipTimeout);
+  tipping=false;
+  }
+function tipSound(mp3File){
+  window.clearTimeout(tipTimeout);
+  tipTimeout=window.setTimeout("resetTip()", 1000);
+  tipping=true;
+  }
 function accelerometerSuccess(e){
   //dbug("x:"+e.x);
   //dbuga("y:"+e.y);
   //dbuga("z:"+e.z);
+  if(tipping==false){
+    if((prevAccelX<0)&&(e.x>0)){tipSound("cockpitmp3/left.mp3");}
+    if((prevAccelX>0)&&(e.x<0)){tipSound("cockpitmp3/right.mp3");}
+    if((prevAccelY<0)&&(e.y>0)){tipSound("cockpitmp3/front.mp3");}
+    if((prevAccelY>0)&&(e.y<0)){tipSound("cockpitmp3/back.mp3");}
+    }
+  prevAccelX=e.x;
+  prevAccelY=e.y;
 
   }
 function accelerometerError(e){

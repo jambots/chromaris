@@ -399,7 +399,7 @@ function geometryTick(){
   for(var d=0; d<360; d+=30){
     var x=wcx+Math.cos(pi*d/180)*g;
     var y=wcy+Math.sin(pi*d/180)*g;
-    animCtx.fillStyle=colorByDegrees(d);
+    animCtx.fillStyle=colorOfDegrees(d);
     animCtx.beginPath();
     if(d%60==0){
       animCtx.arc(x,y,g/4,0,pi*2,true);
@@ -413,7 +413,7 @@ function geometryTick(){
   animCtx.lineWidth=g/10;
   for(var h=0; h<hues.length; h++){
     
-    animCtx.strokeStyle=colorByDegrees(hues[h].deg);
+    animCtx.strokeStyle=colorOfDegrees(hues[h].deg);
     animCtx.beginPath();
     animCtx.moveTo(wcx+g*Math.cos(pi*hues[h].deg/180)/3,wcy+g*Math.sin(pi*hues[h].deg/180)/3);
     animCtx.lineTo(wcx+g*Math.cos(pi*hues[h].deg/180)/1.5,wcy+g*Math.sin(pi*hues[h].deg/180)/1.5);
@@ -448,12 +448,19 @@ function clipSaw(deg){
   if(degOffset<0){degOffset=0;}
   return degOffset;
   }
-function colorByDegrees(deg){
+function colorOfDegrees(deg){
   var red=Math.floor(clipSaw((deg)%360)*255);
   var blue=Math.floor(clipSaw((deg+120)%360)*255);
   var green=Math.floor(clipSaw((deg+240)%360)*255);
-  color="rgb("+red+","+green+","+blue+")";
+  var color="rgb("+red+","+green+","+blue+")";
   return color;
+  }
+function rgbOfDegrees(deg){
+  var red=Math.floor(clipSaw((deg)%360)*255);
+  var blue=Math.floor(clipSaw((deg+120)%360)*255);
+  var green=Math.floor(clipSaw((deg+240)%360)*255);
+  var rgb={"r":red,"g":green, "b":blue};
+  return rgb;
   }
 
 var cw=0; 
@@ -491,11 +498,16 @@ var hueNames=[];
     lockByHueName[hues[h].name]=0;
     hueNames.push(hues[h].name);
     }
-function rgbByHueName(hueName){
+function colorOfHueName(hueName){
+  var rgb=rgbOfHueName(hueName);
+  return "rgb("+rgb.r+", "+rgb.g+", "+rgb.b+")";
+  }
+function rgbOfHueName(hueName){
   var rgb={"r":0, "g":0, "b":0};
-  for (var c=0; c<colors.length; c++){
-    if(colors[c].name==colorName){
-      rgb={"r":colors[c].r, "g":colors[c].g, "b":colors[c].b};
+  for (var h=0; h<hues.length; h++){
+    if(hues[h].name==hueName){
+      var deg=hues[h].deg;
+      rgb=rgbOfDegrees(deg);
       }
     }
   return rgb;

@@ -63,6 +63,7 @@ function tipSound(mp3File){
   window.clearTimeout(tipTimeout);
   tipTimeout=window.setTimeout("resetTip()", 1000);
   tipping=true;
+  loadAndPlayAudio(mp3File);
   }
 function accelerometerSuccess(e){
   //dbug("x:"+e.x);

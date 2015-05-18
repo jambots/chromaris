@@ -37,8 +37,12 @@
 <feature name="http://api.phonegap.com/1.0/notification" />
 <feature name="http://api.phonegap.com/1.0/media" />
 <feature name="http://api.phonegap.com/1.0/device" />
-
+<!-- works iOS 
+android is 
+    [javac] /project/src/com/keith/canvascameraplugin/CanvasCameraView.java:87: error: package R does not exist
 <gap:plugin name="com.keith.cordova.plugin.canvascamera" version="1.0.1" />
+-->
+<gap:plugin name="com.modaltech.cordova.plugin.canvascamera" version="1.0" />
 
 
 <!-- Define app icon for each platform. -->

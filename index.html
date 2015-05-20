@@ -44,12 +44,13 @@ function init(){
   animCanv.ontouchend=function(e){touchEnd(e);}
   geometry();
   geometryInterval=window.setInterval("geometryTick()", 100);
-
+/*
   document.addEventListener('deviceready', function () {
 accelWatch = navigator.accelerometer.watchAcceleration(accelerometerSuccess, accelerometerError, {frequency: 500 });
     window.plugin.CanvasCamera.initialize(bgCanv);
     onStartClicked();
     }, false);
+*/
   }
 var accelWatch;
 var prevAccelX;
@@ -67,9 +68,9 @@ function tipSound(mp3File){
   loadAndPlayAudio(mp3File);
   }
 function accelerometerSuccess(e){
-  dbug("x:"+e.x);
-  dbuga("y:"+e.y);
-  dbuga("z:"+e.z);
+  //dbug("x:"+e.x);
+  //dbuga("y:"+e.y);
+  //dbuga("z:"+e.z);
   if(tipping==false){
     if((prevAccelX<0)&&(e.x>0)){tipSound("cockpitmp3/left.mp3");}
     if((prevAccelX>0)&&(e.x<0)){tipSound("cockpitmp3/right.mp3");}
